@@ -135,7 +135,8 @@ const centers=[[-4.3,0,-3.25],[0,0,-3.4],[4.3,0,-3.15],[-4.3,0,3.25],[0,0,3.4],[
 const builds=[[1,.98,1],[.93,1.08,.88],[1.13,.92,1.03],[.90,1.03,.95],[1.12,.86,1.08],[.98,1.10,.95]];
 const orientations=[-.15,.24,0,PI-.2,-.3,.5];
 const tips=[.09,.15,.07,.20,.12,.17];
-const handCenters=[[-3.3,.6],[-1.7,-.4],[0,-.75],[1.7,-.25],[3.25,1.1]];
+const handCenters=[[-2.75,.2],[-1.1,.8],[.65,.7],[2.5,-.1],[1.1,-1.3]];
+const handTips=[.14,.02,.05,.18,.40];
 const baseParts=horse.map(part=>({...hull(part.vertices),material:part.material}));
 let width=1,height=1,dpr=1,frame=0,lastTime=0,lastPaint=0,drag=null,lastCaption='';
 function horseProfiles(slice,time=0,variation=true){
@@ -152,8 +153,8 @@ function horseProfiles(slice,time=0,variation=true){
 function handProfiles(slice,time=0,variation=true){
   const merge=smooth(.63,1,slice),freedom=1-merge;
   return handCenters.map((c,i)=>{
-    const tip=tips[i]+smooth(0,.7,time)*Math.sin(time*.7+i)*.02,growth=smooth(tip,tip+.145,slice);
-    return {id:i,growth,merge,active:growth>1e-5,center:c.map(v=>v*freedom),radius:growth*mix(variation?[.47,.56,.60,.53,.43][i]:.53,1.65,merge)};
+    const tip=handTips[i]+smooth(0,.7,time)*Math.sin(time*.7+i)*.01,growth=smooth(tip,tip+.08,slice);
+    return {id:i,growth,merge,active:growth>1e-5,center:c.map(v=>v*freedom),radius:growth*mix(variation?[.48,.56,.52,.40,.60][i]:.53,1.65,merge)};
   });
 }
 function horsePoint(p,profile){
@@ -210,41 +211,68 @@ function drawPaperWorld(p,profiles){
 }
 function bezierPoint(points,t){const u=1-t;return [0,1].map(axis=>u*u*u*points[0][axis]+3*u*u*t*points[1][axis]+3*u*t*t*points[2][axis]+t*t*t*points[3][axis]);}
 function curve(points,color,width){ctx.beginPath();ctx.moveTo(...points[0]);ctx.bezierCurveTo(...points[1],...points[2],...points[3]);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.stroke();}
-function bentFingerCurves(){
-  // A three-quarter hand: wrist to the right, four curled fingers and an opposed thumb.
-  const digits=[
-    [[-126,116],[-182,141],[-176,225],[-166,0]],
-    [[-89,106],[-146,135],[-132,235],[-116,0]],
-    [[-51,97],[-108,126],[-86,242],[-67,0]],
-    [[-13,91],[-65,124],[-36,219],[-22,0]],
-    [[70,94],[100,126],[74,240],[52,0]]
+function naturalFingerCurves(){
+  // Index, middle, ring, little finger, then the shorter thumb folded toward the viewer.
+  return [
+    [[-83,157],[-107,185],[-118,239],[-125,275]],
+    [[-44,177],[-53,212],[-44,270],[-45,299]],
+    [[-4,179],[-5,219],[13,261],[17,294]],
+    [[35,164],[49,197],[72,236],[89,266]],
+    [[91,101],[82,137],[57,186],[42,218]]
   ];
-  return digits.map((points,i)=>{points[3][1]=305-tips[i]*219;return points;});
 }
-function drawBentFinger(points,index){
-  const radius=index===4?24:index===0?13:17;
-  const section=t=>{
-    const c=bezierPoint(points,t),a=bezierPoint(points,Math.max(0,t-.001)),b=bezierPoint(points,Math.min(1,t+.001)),len=Math.hypot(b[0]-a[0],b[1]-a[1]);
-    return {c,tangent:[(b[0]-a[0])/len,(b[1]-a[1])/len],normal:[-(b[1]-a[1])/len,(b[0]-a[0])/len],r:radius*(1-.24*t)+Math.sin(t*PI)*1.3};
-  };
-  const sections=Array.from({length:29},(_,i)=>section(i/28)),edge=(s,side)=>[s.c[0]+s.normal[0]*s.r*side,s.c[1]+s.normal[1]*s.r*side];
-  ctx.beginPath();sections.forEach((s,i)=>i?ctx.lineTo(...edge(s,1)):ctx.moveTo(...edge(s,1)));
-  const end=sections[28];ctx.quadraticCurveTo(end.c[0]+end.tangent[0]*end.r*1.9,end.c[1]+end.tangent[1]*end.r*1.9,...edge(end,-1));
-  for(let i=27;i>=0;i--)ctx.lineTo(...edge(sections[i],-1));ctx.closePath();
-  const skin=ctx.createLinearGradient(points[3][0]-radius,110,points[3][0]+radius*1.2,280);skin.addColorStop(0,'#e0d7b8');skin.addColorStop(.5,'#c5c4a0');skin.addColorStop(1,'#8f9b7c');
-  ctx.fillStyle=skin;ctx.fill();ctx.strokeStyle='#9fae8d';ctx.lineWidth=1.2;ctx.stroke();
-  const highlight=sections.slice(4,27).map(s=>[s.c[0]+s.normal[0]*s.r*.48,s.c[1]+s.normal[1]*s.r*.48]);path(highlight);ctx.strokeStyle='rgba(246,235,197,.3)';ctx.lineWidth=2.2;ctx.stroke();
-  for(const t of [.43,.72]){const s=section(t);ctx.save();ctx.translate(...s.c);ctx.rotate(Math.atan2(s.tangent[1],s.tangent[0])-PI/2);ctx.beginPath();ctx.moveTo(-s.r*.66,-1);ctx.quadraticCurveTo(0,4,s.r*.66,-1);ctx.strokeStyle='rgba(76,88,62,.42)';ctx.lineWidth=1.1;ctx.stroke();ctx.restore();}
-  const nail=section(.92);ctx.save();ctx.translate(...nail.c);ctx.rotate(Math.atan2(nail.tangent[1],nail.tangent[0])-PI/2);ellipse(0,0,nail.r*.58,index===4?11:8.5,'rgba(240,228,193,.55)','rgba(113,128,94,.48)',.8);ctx.restore();
-}
-function drawBentHand(curves){
-  curves.forEach(drawBentFinger);
-  const skin=ctx.createLinearGradient(-80,35,70,162);skin.addColorStop(0,'#e4dbbc');skin.addColorStop(.5,'#c8c9a7');skin.addColorStop(1,'#8f9d7c');
-  ctx.beginPath();ctx.moveTo(218,-18);ctx.lineTo(218,39);ctx.bezierCurveTo(177,47,141,57,117,77);ctx.bezierCurveTo(114,107,91,129,68,142);ctx.bezierCurveTo(49,150,30,146,13,132);ctx.bezierCurveTo(-4,144,-23,144,-39,132);ctx.bezierCurveTo(-58,145,-79,144,-94,132);ctx.bezierCurveTo(-113,145,-139,143,-148,127);ctx.bezierCurveTo(-159,108,-140,92,-119,83);ctx.bezierCurveTo(-78,63,-38,58,4,42);ctx.bezierCurveTo(59,23,111,2,147,-7);ctx.closePath();
-  ctx.fillStyle=skin;ctx.fill();ctx.strokeStyle='#aebc98';ctx.lineWidth=1.3;ctx.stroke();
-  // Knuckles, tendons, and the thumb web give the bent pose a readable silhouette.
-  ctx.beginPath();ctx.moveTo(142,23);ctx.bezierCurveTo(80,36,-20,59,-111,111);ctx.moveTo(148,31);ctx.bezierCurveTo(84,47,7,65,-65,116);ctx.moveTo(151,39);ctx.bezierCurveTo(100,54,39,78,-17,112);ctx.strokeStyle='rgba(246,237,201,.3)';ctx.lineWidth=2;ctx.stroke();
-  ctx.beginPath();ctx.moveTo(-126,118);ctx.quadraticCurveTo(-111,111,-99,122);ctx.moveTo(-78,122);ctx.quadraticCurveTo(-65,115,-50,125);ctx.moveTo(-29,120);ctx.quadraticCurveTo(-15,113,-1,123);ctx.moveTo(35,108);ctx.bezierCurveTo(47,89,67,90,81,111);ctx.moveTo(53,130);ctx.quadraticCurveTo(66,124,81,128);ctx.strokeStyle='rgba(70,91,63,.34)';ctx.lineWidth=1.2;ctx.stroke();
+function drawNaturalHand(){
+  const skin=ctx.createLinearGradient(-85,25,110,295);
+  skin.addColorStop(0,'#f1d1b5');skin.addColorStop(.58,'#dfa989');skin.addColorStop(1,'#c38b6d');
+  // One continuous outline keeps the palm and four fingers joined without scalloped knuckles.
+  ctx.beginPath();ctx.moveTo(141,-18);ctx.lineTo(215,-18);
+  ctx.bezierCurveTo(183,27,151,67,126,96);
+  ctx.bezierCurveTo(118,116,97,137,83,155);
+  ctx.bezierCurveTo(72,172,58,185,47,190);
+  ctx.bezierCurveTo(59,207,75,229,96,249);
+  ctx.bezierCurveTo(109,263,94,280,82,265);
+  ctx.bezierCurveTo(64,245,46,219,32,197);
+  ctx.bezierCurveTo(28,193,23,194,23,201);
+  ctx.bezierCurveTo(24,229,35,255,34,281);
+  ctx.bezierCurveTo(34,301,9,306,3,286);
+  ctx.bezierCurveTo(-4,261,-10,234,-15,210);
+  ctx.bezierCurveTo(-17,203,-24,204,-27,212);
+  ctx.bezierCurveTo(-30,236,-26,266,-30,287);
+  ctx.bezierCurveTo(-32,306,-57,306,-61,288);
+  ctx.bezierCurveTo(-69,266,-67,232,-64,210);
+  ctx.bezierCurveTo(-63,201,-70,199,-75,207);
+  ctx.bezierCurveTo(-88,226,-97,252,-109,272);
+  ctx.bezierCurveTo(-121,291,-144,280,-138,260);
+  ctx.bezierCurveTo(-130,233,-124,213,-113,186);
+  ctx.bezierCurveTo(-99,149,-86,130,-58,112);
+  ctx.bezierCurveTo(-19,85,38,70,70,39);
+  ctx.bezierCurveTo(99,14,119,-4,141,-18);ctx.closePath();
+  ctx.fillStyle=skin;ctx.fill();ctx.strokeStyle='#c9987c';ctx.lineWidth=1.4;ctx.stroke();
+  // Restrained palm folds; the fingers show their pads, so there are no nail dots.
+  ctx.beginPath();ctx.moveTo(-60,151);ctx.bezierCurveTo(-30,139,0,144,24,159);
+  ctx.moveTo(-71,173);ctx.bezierCurveTo(-45,160,-20,166,0,176);
+  ctx.moveTo(43,102);ctx.bezierCurveTo(24,117,20,141,29,160);
+  ctx.strokeStyle='rgba(137,85,65,.25)';ctx.lineWidth=1.4;ctx.lineCap='round';ctx.stroke();
+  ctx.beginPath();ctx.moveTo(-120,228);ctx.quadraticCurveTo(-112,233,-104,231);
+  ctx.moveTo(-63,242);ctx.quadraticCurveTo(-47,247,-30,242);
+  ctx.moveTo(-7,239);ctx.quadraticCurveTo(7,242,25,236);
+  ctx.moveTo(59,229);ctx.quadraticCurveTo(69,229,76,223);
+  ctx.strokeStyle='rgba(137,85,65,.2)';ctx.lineWidth=1.1;ctx.stroke();
+  // The thumb sits in front of the palm, with a broad base and a short rounded tip.
+  const thumb=ctx.createLinearGradient(30,105,92,218);
+  thumb.addColorStop(0,'#edc3a5');thumb.addColorStop(1,'#dba081');
+  ctx.beginPath();ctx.moveTo(100,88);ctx.bezierCurveTo(116,104,108,127,92,151);
+  ctx.bezierCurveTo(81,171,67,193,57,208);ctx.bezierCurveTo(47,224,26,222,22,206);
+  ctx.bezierCurveTo(18,193,26,179,33,167);ctx.bezierCurveTo(47,142,52,119,64,104);
+  ctx.bezierCurveTo(75,90,90,81,100,88);ctx.closePath();
+  ctx.fillStyle=thumb;ctx.fill();ctx.strokeStyle='rgba(157,100,75,.45)';ctx.lineWidth=1.1;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(34,176);ctx.quadraticCurveTo(48,184,65,181);
+  ctx.moveTo(32,181);ctx.quadraticCurveTo(46,189,62,186);
+  ctx.strokeStyle='rgba(137,85,65,.27)';ctx.lineWidth=.9;ctx.stroke();
+  // Only the forward-facing thumb nail is visible, as a small rounded trapezoid.
+  ctx.beginPath();ctx.moveTo(31,198);ctx.quadraticCurveTo(39,193,53,200);
+  ctx.lineTo(49,210);ctx.quadraticCurveTo(38,217,29,207);ctx.closePath();
+  ctx.fillStyle='rgba(246,217,198,.68)';ctx.fill();ctx.strokeStyle='rgba(181,127,102,.35)';ctx.lineWidth=.7;ctx.stroke();
 }
 function drawParent(p,profiles){
   const hand=state.mode==='hand',count=hand?5:6;
@@ -252,7 +280,7 @@ function drawParent(p,profiles){
   ctx.save();ctx.translate(cx,top);ctx.scale(scale,scale);
   const sliceY=305-state.slice*219;
   const armXs=[-190,-114,-38,38,114,190];
-  const curves=hand?bentFingerCurves():armXs.map((x,i)=>{const endY=305-tips[i]*219;return [[(i-(count-1)/2)*13,91],[x*.32,125],[x*.95,endY-55],[x,endY]];});
+  const curves=hand?naturalFingerCurves():armXs.map((x,i)=>{const endY=305-tips[i]*219;return [[(i-(count-1)/2)*13,91],[x*.32,125],[x*.95,endY-55],[x,endY]];});
   if(state.reveal){
     for(let i=0;!hand&&i<count;i++){
       const points=curves[i],selected=!hand&&i===state.selected;
@@ -260,7 +288,7 @@ function drawParent(p,profiles){
       if(state.playing&&!hand){const q=bezierPoint(points,(state.time*(.12+i*.012)+i*.13)%1);ellipse(q[0],q[1],2.8,2.8,'#c4dfad',null);}
     }
     if(hand){
-      drawBentHand(curves);
+      drawNaturalHand();
     }else{
       const gradient=ctx.createRadialGradient(-16,39,5,0,58,63);gradient.addColorStop(0,'#4d8064');gradient.addColorStop(1,'#173a31');ellipse(0,51,57,52,gradient,'#8bb79b',1.2);
       ctx.beginPath();ctx.moveTo(5,27);ctx.lineTo(21,-15);ctx.lineTo(25,-37);ctx.lineTo(32,-17);ctx.lineTo(39,-32);ctx.lineTo(43,-9);ctx.lineTo(64,2);ctx.lineTo(76,23);ctx.lineTo(66,33);ctx.lineTo(43,25);ctx.lineTo(33,51);ctx.closePath();ctx.fillStyle='#56846a';ctx.fill();ctx.strokeStyle='#9bc6a6';ctx.lineWidth=1;ctx.stroke();ellipse(49,4,2.4,2.4,'#d7e7c4',null);
@@ -271,8 +299,14 @@ function drawParent(p,profiles){
   // The orange band is a schematic position of the lower-dimensional world.
   path([[-225,sliceY-14],[201,sliceY-14],[225,sliceY+16],[-201,sliceY+16]],true);ctx.fillStyle='rgba(237,171,120,.09)';ctx.fill();ctx.strokeStyle='rgba(237,171,120,.52)';ctx.lineWidth=.9;ctx.stroke();
   ctx.setLineDash([3,5]);line([-211,sliceY],[214,sliceY],'rgba(237,171,120,.3)',.7);ctx.setLineDash([]);
-  if(state.slice<.99){for(let i=0;i<count;i++){if(!profiles[i].active)continue;let lo=0,hi=1;for(let k=0;k<18;k++){const mid=(lo+hi)/2;if(bezierPoint(curves[i],mid)[1]<sliceY)lo=mid;else hi=mid;}const q=bezierPoint(curves[i],(lo+hi)/2),merge=hand?profiles[i].merge:0,r=profiles[i].growth*(hand?mix(i===4?20:13,44,merge):10);ellipse(mix(q[0],-20,merge),sliceY,r,r*.4,'#c99a6d','#f0c092',1);}}
-  else ellipse(hand?-20:0,sliceY,hand?44:32,hand?15:12,'#b78b63','#f0c092',1.2);
+  if(state.slice<.99){for(let i=0;i<count;i++){
+    if(!profiles[i].active)continue;
+    const merge=hand?profiles[i].merge:0,sectionY=sliceY+(hand?[0,7,5,10,-9][i]*(1-merge):0);
+    let lo=0,hi=1;for(let k=0;k<18;k++){const mid=(lo+hi)/2;if(bezierPoint(curves[i],mid)[1]<sectionY)lo=mid;else hi=mid;}
+    const q=bezierPoint(curves[i],(lo+hi)/2),r=profiles[i].growth*(hand?mix(i===4?16:i===3?11:14,44,merge):10);
+    ellipse(mix(q[0],0,merge),sectionY,r,r*.4,hand?'#b78456':'#c99a6d','#f0c092',1);
+  }}
+  else ellipse(0,sliceY,hand?44:32,hand?15:12,'#b78b63','#f0c092',1.2);
   if(hand){ctx.fillStyle='rgba(11,27,28,.86)';ctx.fillRect(130,sliceY-35,66,16);}
   label(hand?'2D PAPER':'OUR 3D WORLD',hand?138:-217,sliceY-24,'#edab78',9,'left');
   if(!state.reveal)label('THE CONNECTION IS HIDDEN FROM THIS WORLD',0,44,'#9cb69f',9);
@@ -311,13 +345,13 @@ function updateUI(){
   else if(state.slice===1)caption='<strong>The pieces meet at their shared body.</strong> '+(hand?'The five finger branches converge into one idealized palm section.':'All six branches now occupy the same common core. The creature is connected outside the separated-horse slice.');
   else if(state.slice>.63)caption='<strong>You’re moving toward the connection.</strong> The branch sections converge as the slice approaches the shared '+(hand?'palm':'body')+'. Keep moving right to see them meet.';
   else if(state.slice<.345)caption='<strong>The tips are entering the slice.</strong> '+active+' of '+(hand?'5':'6')+' sample branches currently intersect it. The sections grow as the slice moves inward.';
-  else caption=hand?'<strong>Five circles. Still one hand.</strong> The paper contains separate finger cross-sections; the palm connecting them exists outside that two-dimensional world.':'<strong>Separate in our world. Connected outside it.</strong> Each visible horse is a different branch intersecting the same 3D slice. The shared body lies farther along w.';
+  else caption=hand?'<strong>'+active+' separate sections. Still one hand.</strong> The paper contains separate finger cross-sections; the palm connecting them exists outside that two-dimensional world.':'<strong>Separate in our world. Connected outside it.</strong> Each visible horse is a different branch intersecting the same 3D slice. The shared body lies farther along w.';
   if(caption!==lastCaption){$('slice-help').innerHTML=caption;lastCaption=caption;}
   canvas.setAttribute('aria-label',(hand?'A connected hand and its two-dimensional finger sections':'One connected 4D creature and its 3D horse sections')+'. '+coordinate+' equals '+state.slice.toFixed(2)+'. '+active+' sample branches intersect. '+(hand?'Move the slice slider to explore.':'Drag the right view or use arrow keys to orbit.'));
 }
 function resize(){const rect=canvas.getBoundingClientRect();width=rect.width;height=rect.height;dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);render();}
 function setPlaying(on){state.playing=on;cancelAnimationFrame(frame);lastTime=0;lastPaint=0;if(on)frame=requestAnimationFrame(tick);updateUI();render();}
-function tick(time){if(!state.playing)return;const delta=lastTime?Math.min((time-lastTime)/1000,.06):0;lastTime=time;state.time+=delta;if(time-lastPaint>=33){if(state.mode==='hand'&&state.slice<.345)updateUI();render();lastPaint=time;}frame=requestAnimationFrame(tick);}
+function tick(time){if(!state.playing)return;const delta=lastTime?Math.min((time-lastTime)/1000,.06):0;lastTime=time;state.time+=delta;if(time-lastPaint>=33){if(state.mode==='hand'&&state.slice<.49)updateUI();render();lastPaint=time;}frame=requestAnimationFrame(tick);}
 function selectMode(mode){if(state.playing)setPlaying(false);state.mode=mode;state.time=0;updateUI();render();}
 function scrollToLab(){ $('lab').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'}); }
 $('slice').addEventListener('input',event=>{state.slice=Number(event.target.value)/100;updateUI();render();});
@@ -346,3 +380,4 @@ new ResizeObserver(resize).observe($('stage'));window.addEventListener('resize',
 </script>
 </body>
 </html>
+
