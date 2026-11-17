@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0b1b1c">
+  <meta name="description" content="One horse. Four dimensions. An interactive, Flatland-inspired thought experiment in higher-dimensional horseness.">
+  <title>The Single Horse Model — An Equine Thought Experiment</title>
+  <style>
+    :root{--bg:#0b1b1c;--panel:#102324;--ink:#e9eee2;--muted:#9baea7;--mint:#a4d5bb;--line:#2a4040;--orange:#edab78;--dim:#617e76;--serif:Georgia,'Times New Roman',serif;--sans:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--mono:'SFMono-Regular',Consolas,'Liberation Mono',monospace}
+    *{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:24px}body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;-webkit-font-smoothing:antialiased}button,input,select{font:inherit}button,a,input,select{-webkit-tap-highlight-color:transparent}button,a{touch-action:manipulation}button{cursor:pointer}a{color:inherit}button:focus-visible,a:focus-visible,select:focus-visible,canvas:focus-visible,summary:focus-visible{outline:2px solid var(--orange);outline-offset:5px}input:focus-visible{outline:2px solid var(--orange);outline-offset:4px}button{color:var(--ink)}button:disabled{opacity:.4;cursor:default}.wrap{max-width:1440px;margin:auto;padding:0 60px}.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:2px;text-transform:uppercase}.muted{color:var(--muted)}
+    header{height:91px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);gap:24px}.brand{display:flex;align-items:center;gap:12px;text-decoration:none;font-size:12px;letter-spacing:2px;font-weight:650}.brand svg{width:33px;height:33px;color:var(--mint)}.header-right{display:flex;align-items:center;gap:35px}.header-right span{color:var(--muted);font-size:10px;letter-spacing:1.5px}.text-button{border:0;background:none;padding:8px 0;color:var(--mint);font-size:12px;display:inline-flex;gap:12px;align-items:center;text-decoration:none}.text-button:hover{color:var(--ink)}
+    .hero{padding:65px 0 44px;display:grid;grid-template-columns:1.2fr 1fr;gap:60px;align-items:end}.hero .eyebrow{color:var(--mint);display:flex;align-items:center;gap:10px;margin-bottom:22px}.status-dot{width:6px;height:6px;background:var(--mint);border-radius:50%;box-shadow:0 0 12px #a4d5bb50}.hero h1{font-family:var(--serif);font-weight:400;font-size:clamp(54px,6.4vw,89px);line-height:1.02;letter-spacing:-3.5px;margin:0}.hero h1 em{color:var(--mint);font-weight:400}.hero-copy{padding:0 0 5px;max-width:420px;justify-self:end}.hero-copy .premise{font-size:18px;line-height:1.65;color:#c2d1c8;margin:0 0 18px}.hero-copy .fine{font-family:var(--mono);font-size:10px;line-height:1.7;letter-spacing:.3px;color:var(--muted);margin:0}
+    .lab{border:1px solid var(--line);border-radius:3px;background:radial-gradient(ellipse at 35% 42%,#18353655,transparent 60%),var(--bg);overflow:hidden}.lab-top{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:19px 23px;border-bottom:1px solid var(--line)}.lab-title{color:var(--muted);font-family:var(--mono);font-size:10px;letter-spacing:1.7px;display:flex;gap:12px;align-items:center}.lab-title b{font-weight:400;color:var(--mint)}.tabs{display:flex;gap:5px;background:#081617;border:1px solid #263b3b;padding:4px;border-radius:4px}.tabs button{background:none;border:0;padding:8px 16px;border-radius:2px;color:var(--muted);font-size:12px}.tabs button[aria-pressed=true]{background:#29413c;color:#e0eddf}.tabs button:hover{color:var(--ink)}
+    .stage{position:relative;height:455px;width:100%}.stage canvas{display:block;width:100%;height:100%;cursor:grab;touch-action:pan-y}.stage canvas.dragging{cursor:grabbing}.viewport-labels{position:absolute;top:26px;left:0;right:0;display:grid;grid-template-columns:1fr 1fr;pointer-events:none}.view-label{padding-left:30px;display:flex;gap:13px;align-items:start}.view-label .number{border:1px solid #49635c;width:35px;height:35px;display:grid;place-items:center;border-radius:50%;color:var(--mint);font-family:var(--mono);font-size:11px}.view-label.shadow .number{color:var(--orange);border-color:#795d46}.view-label strong{display:block;font-size:12px;font-weight:500;letter-spacing:.3px;margin:2px 0 5px}.view-label span{font-family:var(--mono);font-size:9px;color:var(--muted)}.view-label.shadow strong{color:#e9c3a1}.projection-label{position:absolute;left:50%;top:47%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;background:#0c1e1ed9;padding:10px 14px;max-width:120px}.projection-label .arrow{font-size:25px;color:var(--orange);line-height:1.4}.projection-label small{font:9px/1.7 var(--mono);color:var(--muted);display:block;letter-spacing:.5px}.stage-footer{position:absolute;bottom:17px;left:29px;right:29px;display:flex;justify-content:space-between;gap:15px;pointer-events:none;font:9px var(--mono);color:var(--dim)}.stage-footer .key{color:var(--mint)}
+    .controls{display:grid;grid-template-columns:1.45fr .85fr auto;border-top:1px solid var(--line);background:#102323;padding:23px 27px;gap:31px;align-items:center}.slider-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.slider-head label,.plane-label{color:#c1d0c6;font-size:11px}.slider-head output{font:11px var(--mono);color:var(--orange)}input[type=range]{width:100%;height:4px;margin:0;display:block;accent-color:var(--mint);cursor:pointer}input[type=range]::-webkit-slider-thumb{cursor:ew-resize}.range-notes{display:flex;justify-content:space-between;font:9px var(--mono);color:var(--dim);margin-top:13px}.plane-field{display:flex;align-items:center;justify-content:space-between;gap:18px}.plane-field select{background:#102323;color:var(--mint);border:1px solid #3a5149;border-radius:3px;padding:8px 29px 8px 11px;font-family:var(--mono);font-size:11px;max-width:155px}.toggle-row{margin-top:17px;display:flex;gap:8px;align-items:center;font-size:10px;color:var(--muted)}.toggle-row input{accent-color:var(--mint);margin:0;width:14px;height:14px}.actions{display:flex;gap:8px;align-items:center}.play{display:flex;align-items:center;justify-content:center;gap:10px;min-width:146px;background:var(--mint);color:#142a25;border:1px solid var(--mint);border-radius:3px;padding:13px 15px;font-size:11px;font-weight:600}.play:hover{background:#c5e7cd}.play svg{width:12px;height:12px}.reset{width:40px;height:42px;background:none;border:1px solid #3a5149;border-radius:3px;color:var(--muted);font-size:21px}.reset:hover{border-color:var(--mint);color:var(--mint)}.live-caption{margin:0;border-top:1px solid var(--line);padding:14px 27px;font-size:11px;line-height:1.7;color:var(--muted);min-height:48px}.live-caption strong{font-weight:500;color:var(--mint)}
+    .coordinate-strip{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:18px 0;color:var(--dim);font:10px/1.6 var(--mono);border-bottom:1px solid var(--line)}.coordinate-strip code{color:#bfd1c5;font:12px var(--mono)}.coordinate-strip .tag{color:var(--orange);font-size:9px;white-space:nowrap;letter-spacing:1px}
+    .argument{padding:64px 0 59px}.section-heading{display:flex;align-items:end;justify-content:space-between;gap:30px;margin-bottom:37px}.section-heading .eyebrow{color:var(--mint);margin-bottom:12px}.section-heading h2,.many h2{font:400 36px/1.14 var(--serif);letter-spacing:-.7px;margin:0}.section-heading p{font-size:12px;color:var(--muted);max-width:265px;line-height:1.6;margin:0 0 2px}.steps{display:grid;grid-template-columns:1fr 1fr 1fr;gap:42px}.step{border-top:1px solid #3b514a;padding-top:20px}.step-top{display:flex;align-items:center;gap:15px;margin-bottom:13px}.step .index{font:10px var(--mono);color:var(--orange)}.step h3{font-size:14px;font-weight:500;letter-spacing:-.1px;margin:0}.step p{font-size:12px;line-height:1.9;color:var(--muted);margin:0}.step strong{color:#d2e0d4;font-weight:500}.step svg{width:100%;height:115px;margin:14px 0 2px;overflow:visible}.diagram-label{fill:#829e92;font:9px var(--mono)}
+    .many{border-top:1px solid var(--line);padding:37px 0 44px}.many-intro{display:flex;justify-content:space-between;align-items:end;gap:25px}.many h2{font-size:30px}.many p{color:var(--muted);font-size:12px;line-height:1.7;max-width:405px;margin:12px 0 0}.many .eyebrow{color:var(--orange);font-size:9px;white-space:nowrap}.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;margin-top:25px}.specimen{background:#102323;border:1px solid #263b37;border-radius:3px;padding:0;overflow:hidden;text-align:left;transition:border-color .2s;position:relative}.specimen:hover{border-color:var(--mint)}.specimen canvas{display:block;width:100%;height:164px;pointer-events:none}.specimen-meta{display:flex;justify-content:space-between;gap:10px;padding:0 17px 17px;font:10px var(--mono);color:var(--muted)}.specimen-meta b{font-weight:400;color:#d4e3d5}.specimen-meta .corner{color:var(--mint)}.many-note{font:10px/1.7 var(--mono)!important;max-width:none!important;color:#7f9c8e!important;margin-top:16px!important}
+    .footnote{border-top:1px solid var(--line);padding:23px 0 25px}.footnote summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:20px;color:var(--muted);font:11px var(--mono)}.footnote summary::-webkit-details-marker{display:none}.footnote summary:after{content:'+';color:var(--mint);font-size:15px}.footnote[open] summary:after{content:'−'}.notes-content{max-width:860px;padding:12px 0 0;font-size:12px;line-height:1.9;color:var(--muted)}.notes-content p{margin:12px 0}.notes-content strong{color:var(--ink);font-weight:500}.notes-content code{color:var(--orange);font:11px var(--mono)}.notes-content a{color:var(--mint);text-underline-offset:4px}.equation{display:block;border-left:2px solid #537964;padding:11px 17px;margin:16px 0;color:#c2dcc7!important;font:12px/2 var(--mono)!important}footer{border-top:1px solid var(--line);display:flex;justify-content:space-between;gap:25px;align-items:center;padding:27px 0 37px;font:9px/1.7 var(--mono);color:var(--dim)}footer .final-line{color:var(--mint);font:italic 20px var(--serif)}.download-toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#d5ead9;color:#0b1b1c;z-index:10;padding:12px 22px;border-radius:4px;font-size:12px;box-shadow:0 5px 30px #0008}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}noscript{display:block;margin:20px;padding:20px;border:1px solid var(--orange);color:var(--orange)}
+    @media(min-width:1440px){.stage{height:495px}}@media(max-width:1100px){.wrap{padding:0 32px}.hero{gap:30px}.hero-copy{max-width:340px}.hero-copy .premise{font-size:16px}.controls{gap:22px;grid-template-columns:1.3fr .9fr auto;padding:23px}.play{min-width:118px}.plane-field{gap:10px;flex-wrap:wrap}.steps{gap:27px}.stage{height:395px}.view-label{padding-left:24px}.header-right span{display:none}}@media(max-width:760px){.wrap{padding:0 22px}header{height:75px}.brand{font-size:10px;letter-spacing:1.2px}.brand svg{width:29px;height:29px}.header-right{gap:0}.text-button{font-size:11px}.hero{padding:42px 0 32px;grid-template-columns:1fr;gap:24px}.hero h1{font-size:66px;letter-spacing:-2.7px}.hero .eyebrow{font-size:9px;margin-bottom:18px}.hero-copy{justify-self:start;max-width:490px}.hero-copy .premise{font-size:15px;line-height:1.7;margin-bottom:12px}.hero-copy .fine{font-size:9px}.lab-top{padding:14px 16px;gap:10px}.lab-title{font-size:9px;letter-spacing:1px}.lab-title .desktop{display:none}.tabs button{padding:7px 11px;font-size:10px}.stage{height:580px}.viewport-labels{display:block;top:20px;height:calc(100% - 20px)}.view-label{position:absolute;top:0;padding-left:20px}.view-label.shadow{top:50%}.view-label .number{width:30px;height:30px;font-size:10px}.view-label strong{font-size:11px;margin:0 0 4px}.view-label span{font-size:8px}.projection-label{top:50%;padding:4px 14px;display:flex;max-width:none;gap:10px;align-items:center}.projection-label .arrow{transform:rotate(90deg);font-size:21px;line-height:1}.projection-label small{font-size:8px;display:inline}.projection-label small:last-child{display:none}.stage-footer{font-size:8px;bottom:12px;left:19px;right:19px}.stage-footer .coords{display:none}.controls{grid-template-columns:1fr;gap:22px;padding:23px 20px}.plane-field{flex-wrap:nowrap;justify-content:flex-start;gap:20px}.control-options{display:flex;align-items:center;justify-content:space-between;gap:15px}.toggle-row{margin:0;white-space:nowrap}.plane-field select{font-size:10px;max-width:120px}.plane-label{font-size:10px}.actions{gap:10px}.play{flex:1}.reset{width:45px}.live-caption{padding:14px 20px;font-size:10px}.coordinate-strip{display:block;font-size:9px;padding:15px 0}.coordinate-strip code{font-size:11px;display:inline-block;margin-bottom:7px}.coordinate-strip .tag{float:right;margin:3px 0 0}.coordinate-strip .screen-note{display:block}.argument{padding:43px 0 35px}.section-heading{align-items:start;display:block;margin-bottom:28px}.section-heading h2{font-size:33px}.section-heading p{margin-top:15px;max-width:none}.steps{grid-template-columns:1fr;gap:26px}.step{position:relative;padding-right:0}.step svg{height:100px;max-width:380px;display:block;margin:17px auto 3px}.step p{font-size:12px;max-width:600px}.many{padding:32px 0}.many-intro{display:block}.many-intro .eyebrow{display:block;margin-top:17px;font-size:9px}.many h2{font-size:29px}.gallery{gap:9px;margin-top:21px}.specimen canvas{height:98px}.specimen-meta{display:block;padding:0 9px 12px;font-size:8px}.specimen-meta b{display:block;margin-bottom:5px}.specimen-meta .corner{display:none}.many-note{font-size:9px!important}.footnote summary{font-size:9px;line-height:1.6}footer{display:block;padding:24px 0 31px}footer .final-line{display:block;margin-bottom:13px}.notes-content{font-size:11px}.equation{font-size:10px!important;overflow-wrap:anywhere}}
+    @media(max-width:760px){.lab-top{flex-wrap:wrap;gap:12px}.lab-title{white-space:nowrap;gap:9px}.tabs{margin-left:auto}.tabs button{white-space:nowrap}.hero h1{font-size:clamp(48px,16.9vw,66px)}.control-options{flex-wrap:wrap}}
+    @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <a class="brand" href="#" aria-label="Single Horse Model, back to top"><svg viewBox="0 0 40 40" fill="none" aria-hidden="true"><path d="M7 12 22 5l12 10-4 19-18 1L7 12Z M7 12l15 7 12-4M22 5v14l8 15M22 19l-10 16M13 16l9-4 6 6-2 10-10 1-3-13Z" stroke="currentColor" stroke-width="1.2"/></svg><span>EQUINE FIELD THEORY</span></a>
+      <div class="header-right"><span class="eyebrow">INSTITUTE OF SPECULATIVE HORSENESS</span><button class="text-button" id="download" type="button">Download HTML <span aria-hidden="true">↗</span></button></div>
+    </header>
+    <main>
+      <section class="hero" aria-labelledby="page-title">
+        <div><div class="eyebrow"><span class="status-dot"></span> THE SINGLE HORSE MODEL</div><h1 id="page-title">There is only<br><em>one horse.</em></h1></div>
+        <div class="hero-copy"><p class="premise">Every horse you’ve ever seen is a shadow.<br>Somewhere beyond our three dimensions,<br>the one casting them is waiting.</p><p class="fine">A Flatland-inspired thought experiment.<br>Real projection geometry. Extremely speculative zoology.</p></div>
+      </section>
+      <section class="lab" id="lab" aria-label="Interactive four-dimensional projection lab">
+        <div class="lab-top"><div class="lab-title"><b>FIG. 01</b><span class="desktop"> / </span><span>THE PROJECTION LAB</span></div><div class="tabs" role="group" aria-label="Choose the four-dimensional object"><button id="horse-tab" type="button" aria-pressed="true">The horse</button><button id="cube-tab" type="button" aria-pressed="false">The tesseract</button></div></div>
+        <div class="stage" id="stage">
+          <canvas id="scene" tabindex="0" aria-label="Left: the wireframe of a horse extended into the fourth dimension. Right: its three-dimensional projected volume. Drag horizontally to orbit, or use the arrow keys. Use the rotation slider below to rotate through the fourth dimension."></canvas>
+          <div class="viewport-labels"><div class="view-label"><div class="number">4D</div><div><strong id="source-label">The one horse</strong><span>THE PARENT · OBLIQUE DIAGRAM</span></div></div><div class="view-label shadow"><div class="number">3D</div><div><strong id="shadow-label">A horse in our world</strong><span>THE SHADOW · SOLID VOLUME</span></div></div></div>
+          <div class="projection-label"><small>PROJECT ALONG w</small><div class="arrow" aria-hidden="true">⟶</div><small>one dimension<br>hidden from view</small></div>
+          <div class="stage-footer"><span><span class="key">↔</span> Drag to orbit · arrow keys also work</span><span class="coords">x · y · z · <span class="key">w</span> → x · y · z</span></div>
+        </div>
+        <div class="controls">
+          <div class="slider-control"><div class="slider-head"><label for="rotation">Rotate through the fourth dimension</label><output id="angle-output" for="rotation">0°</output></div><input id="rotation" type="range" min="-90" max="90" step="1" value="0" aria-describedby="rotation-help"><div class="range-notes" aria-hidden="true"><span>−90°</span><span>0° · the familiar horse</span><span>+90°</span></div></div>
+          <div class="control-options"><div class="plane-field"><label for="plane" class="plane-label">Rotation plane</label><select id="plane"><option value="xw">x ↔ w</option><option value="yw">y ↔ w</option><option value="zw">z ↔ w</option></select></div><label class="toggle-row"><input id="connectors" type="checkbox" checked>Show w connections</label></div>
+          <div class="actions"><button class="play" id="play" type="button" aria-pressed="false"><span id="play-icon" aria-hidden="true">▶</span><span id="play-text">Play rotation</span></button><button class="reset" id="reset" type="button" aria-label="Reset view and all controls" title="Reset view and all controls">↺</button></div>
+        </div>
+        <p class="live-caption" id="rotation-help" aria-live="polite"><strong>At 0°, the extra dimension disappears.</strong> The two w-boundaries project onto the same 3D horse. Move the slider to reveal what it hides.</p>
+      </section>
+      <div class="coordinate-strip"><code id="equation">π(x, y, z, w) = (x, y, z)</code><span class="tag">4D → 3D → YOUR SCREEN</span><span class="screen-note">The shadow has depth. Orbit it to see.</span></div>
+      <noscript>Enable JavaScript to explore the interactive horse. The explanation below remains readable without it.</noscript>
+      <section class="argument" id="argument" aria-labelledby="argument-title">
+        <div class="section-heading"><div><div class="eyebrow">A BRIEF PRESENTATION FOR YOUR COWORKER</div><h2 id="argument-title">Follow the horse.</h2></div><p>Three steps from sensible geometry<br>to a suspiciously unified stable.</p></div>
+        <div class="steps">
+          <article class="step"><div class="step-top"><span class="index">01 /</span><h3>A shadow loses a dimension.</h3></div><p>A solid horse can cast a flat silhouette. Extend that idea: a four-dimensional object can have a <strong>three-dimensional shadow</strong>. Our whole world could be its projection space.</p><svg viewBox="0 0 330 115" role="img" aria-label="A three-dimensional cube projects onto a flat two-dimensional square"><g fill="none" stroke="#92bea6" stroke-width="1.1"><path d="M35 36 65 20 98 34 98 68 68 85 35 70Z M35 36l33 16 30-18M68 52v33M65 20v34l33 14"/><path d="m190 37 52 0 0 43-52 0Z" fill="#a4d5bb12"/><path d="M104 35 189 37M104 69 189 80" stroke="#547b68" stroke-dasharray="3 5"/></g><path d="M133 56h23m-4-4 4 4-4 4" fill="none" stroke="#edab78"/><text x="47" y="106" class="diagram-label">3D OBJECT</text><text x="186" y="106" class="diagram-label">2D SHADOW</text></svg></article>
+          <article class="step"><div class="step-top"><span class="index">02 /</span><h3>Give the horse a fourth direction.</h3></div><p>A cube extended along a new axis becomes a tesseract. Do the same with a horse: <strong>horse × fourth-dimensional interval</strong>. The glowing connections are its hidden direction, w.</p><svg viewBox="0 0 330 115" role="img" aria-label="Two offset squares connected along a new axis illustrate dimensional extrusion"><g fill="none" stroke-width="1.1"><path d="M75 43h63v48H75Z" stroke="#678c77"/><path d="M105 19h63v48h-63Z" stroke="#badfc5"/><path d="m75 43 30-24m33 24 30-24m-30 72 30-24M75 91l30-24" stroke="#edab78" stroke-dasharray="3 4"/></g><path d="m202 76 33-28m-8 1 8-1-1 8" fill="none" stroke="#edab78" stroke-width="1.1"/><text x="247" y="50" fill="#edab78" font-family="Georgia" font-size="17" font-style="italic">w</text><text x="64" y="110" class="diagram-label">SAME SHAPE. ONE MORE AXIS.</text></svg></article>
+          <article class="step"><div class="step-top"><span class="index">03 /</span><h3>Many appearances. One source.</h3></div><p>Rotate one object and its shadow changes. The playful leap: <strong>every earthly horse is a different projection of one hyperhorse</strong>. More horses? Or just more angles?</p><svg viewBox="0 0 330 115" role="img" aria-label="One source can be projected in different directions to produce different appearances"><g fill="none" stroke="#537d68" stroke-dasharray="3 5"><path d="M163 37 71 75M163 37v38M163 37l93 38"/></g><path d="m163 9 16 9v18l-16 9-16-9V18Z M147 18l16 9 16-9M163 27v18" fill="#a4d5bb0a" stroke="#b4dcc1" stroke-width="1.1"/><g fill="#edab7818" stroke="#edab78"><ellipse cx="70" cy="83" rx="20" ry="9"/><circle cx="163" cy="83" r="13"/><ellipse cx="256" cy="83" rx="12" ry="17"/></g><text x="72" y="112" class="diagram-label">DIFFERENT PROJECTION MAPS</text></svg></article>
+        </div>
+      </section>
+      <section class="many" aria-labelledby="many-title"><div class="many-intro"><div><h2 id="many-title">Same being. Different angles.</h2><p>Three projections of the exact same 4D model. Select a specimen to inspect it in the lab.</p></div><span class="eyebrow">PARENT OBJECTS: 01</span></div><div class="gallery"><button type="button" class="specimen" data-angle="0" aria-label="Inspect the familiar horse at zero degrees"><canvas id="specimen-0" aria-hidden="true"></canvas><span class="specimen-meta"><b>01 / Familiar</b><span>θ = 0° <span class="corner">↗</span></span></span></button><button type="button" class="specimen" data-angle="35" aria-label="Inspect the broader shadow at 35 degrees"><canvas id="specimen-1" aria-hidden="true"></canvas><span class="specimen-meta"><b>02 / Unfamiliar</b><span>θ = 35° <span class="corner">↗</span></span></span></button><button type="button" class="specimen" data-angle="65" aria-label="Inspect the compressed shadow at 65 degrees"><canvas id="specimen-2" aria-hidden="true"></canvas><span class="specimen-meta"><b>03 / Suspicious</b><span>θ = 65° <span class="corner">↗</span></span></span></button></div><p class="many-note">Separate views of one mathematical object—not three simultaneous shadows in one world.</p></section>
+      <details class="footnote"><summary>The fine print: what the geometry actually proves</summary><div class="notes-content"><p><strong>This illustrates a possibility; it does not prove that real horses share a 4D source.</strong> The model is deliberately constructed to cast a horse-shaped projection at zero rotation. Explaining real horses would require evidence and a physical mechanism, neither of which this page supplies.</p><p>Let H be our 3D horse, built as a union of convex polyhedra. We construct a four-dimensional solid by extending every point of H along the spatial coordinate w. For a = 0.58:</p><div class="equation">H₄ = H × [−a, +a]<br>Rₓw(θ): x′ = x cos θ − w sin θ; w′ = x sin θ + w cos θ<br>π(x′, y′, z′, w′) = (x′, y′, z′)<br>Therefore π(H₄) = H when θ = 0.</div><p>The left panel uses an <strong>oblique 4D-to-3D diagram</strong>: (x′ + 0.56w′, y′ + 0.68w′, z′ + 0.42w′), followed by a 3D camera view. The right panel uses <strong>orthographic projection along w</strong>, followed by that same camera. It displays the full projected solid, not just a central slice. Each convex component is projected by taking the 3D convex hull of both w-boundaries. Overlapping components form the horse.</p><p>A tesseract is specifically the 4D analogue of a cube. Our “horse tesseract” is a <strong>horse-shaped 4D extrusion</strong>, a playful analogy. The fourth dimension here is an extra direction in space, not time. “Shadow” means a geometric projection; no physical 4D light source is being claimed.</p><p>In Edwin A. Abbott’s <a href="https://www.gutenberg.org/ebooks/97" target="_blank" rel="noopener noreferrer"><em>Flatland: A Romance of Many Dimensions</em> (1884)</a>, a two-dimensional observer encounters a higher-dimensional world. The book’s sphere passing through a plane produces <strong>cross-sections</strong>; this demo instead explores <strong>projections</strong>. Those are different ways to represent a higher-dimensional object.</p><p>A continuous projection of this connected hyperhorse is connected. It cannot produce every separated horse on Earth under one ordinary projection. The “single horse” story therefore needs additional assumptions beyond this model. Your coworker is allowed to bring that up.</p></div></details>
+    </main>
+    <footer><span class="final-line">One horse. Infinite neigh-bilities.</span><span>A SPECULATIVE MODEL BY ALEJANDRO MONTESINOS<br>INSPIRED BY FLATLAND · POWERED BY QUESTIONABLE HORSENESS</span></footer>
+  </div>
+  <div id="toast" class="download-toast" role="status" hidden>HTML downloaded. The whole horse travels with it.</div>
+  <script>
+  (() => {
+    'use strict';
+    const $ = id => document.getElementById(id);
+    const canvas = $('scene'), ctx = canvas.getContext('2d');
+    const PI = Math.PI, TAU = 2*PI, EXTENT = 0.58;
+    const state = {kind:'horse', angle:0, plane:0, yaw:-0.30, pitch:0.12, connections:true, playing:false};
+    let width=1,height=1,dpr=1,frame=0,lastTime=0,dirty=true,geometryKey='',shadowParts=[],sourceParts=[],playPhase=0,lastCaption='';
+    const add=(a,b)=>a.map((x,i)=>x+b[i]), sub=(a,b)=>a.map((x,i)=>x-b[i]), mul=(a,s)=>a.map(x=>x*s);
+    const dot=(a,b)=>a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+    const cross=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
+    const norm=a=>Math.hypot(...a), unit=a=>mul(a,1/(norm(a)||1));
+    const clamp=(n,a,b)=>Math.min(b,Math.max(a,n));
+    const lerp=(a,b,t)=>a.map((v,i)=>v+(b[i]-v)*t);
+    // Incremental convex hull. The fixed interior point orients every face outward.
+    function hull(input){
+      const seen=new Set(), points=[];
+      for(const p of input){const k=p.map(v=>Math.round(v*1e7)).join(',');if(!seen.has(k)){seen.add(k);points.push(p);}}
+      if(points.length<4)return {points,faces:[]};
+      let i0=0;for(let i=1;i<points.length;i++)if(points[i][0]<points[i0][0])i0=i;
+      let i1=-1,far=-1;
+      for(let i=0;i<points.length;i++){const d=dot(sub(points[i],points[i0]),sub(points[i],points[i0]));if(d>far){far=d;i1=i;}}
+      let i2=-1;far=-1;const axis=sub(points[i1],points[i0]);
+      for(let i=0;i<points.length;i++){const n=cross(axis,sub(points[i],points[i0])),d=dot(n,n);if(d>far){far=d;i2=i;}}
+      if(far<1e-15)return {points,faces:[]};
+      let i3=-1;far=-1;const normal=unit(cross(axis,sub(points[i2],points[i0])));
+      for(let i=0;i<points.length;i++){const d=Math.abs(dot(normal,sub(points[i],points[i0])));if(d>far){far=d;i3=i;}}
+      if(far<1e-8)return {points,faces:[]};
+      const inside=mul(add(add(points[i0],points[i1]),add(points[i2],points[i3])),.25);
+      function face(a,b,c){let n=cross(sub(points[b],points[a]),sub(points[c],points[a]));if(dot(n,sub(inside,points[a]))>0){[b,c]=[c,b];n=mul(n,-1);}return {v:[a,b,c],n,d:dot(n,points[a])};}
+      let faces=[face(i0,i1,i2),face(i0,i3,i1),face(i0,i2,i3),face(i1,i3,i2)];
+      const seed=new Set([i0,i1,i2,i3]);
+      for(let i=0;i<points.length;i++){
+        if(seed.has(i))continue;
+        const visible=[],kept=[];
+        for(const f of faces){(dot(f.n,points[i])-f.d>1e-8?visible:kept).push(f);}
+        if(!visible.length)continue;
+        const edges=new Map();
+        for(const f of visible)for(let e=0;e<3;e++){const a=f.v[e],b=f.v[(e+1)%3],k=Math.min(a,b)+','+Math.max(a,b);if(edges.has(k))edges.delete(k);else edges.set(k,[a,b]);}
+        for(const [a,b] of edges.values()){const f=face(a,b,i);if(norm(f.n)>1e-10)kept.push(f);}
+        faces=kept;
+      }
+      return {points,faces:faces.map(f=>f.v)};
+    }
+    function mesh(vertices,wire,material='body'){return {vertices,wire,material};}
+    function ellipsoid(c,r,tilt=0,material='body',segments=8,rings=5){
+      const pts=[],edges=[],ct=Math.cos(tilt),st=Math.sin(tilt);
+      function p(x,y,z){pts.push([c[0]+ct*x-st*y,c[1]+st*x+ct*y,c[2]+z]);}
+      p(0,r[1],0);
+      for(let j=1;j<rings;j++){const phi=PI*j/rings;for(let k=0;k<segments;k++){const a=TAU*k/segments;p(r[0]*Math.sin(phi)*Math.cos(a),r[1]*Math.cos(phi),r[2]*Math.sin(phi)*Math.sin(a));}}
+      const end=pts.length;p(0,-r[1],0);
+      for(let j=0;j<rings-1;j++)for(let k=0;k<segments;k++){const a=1+j*segments+k;edges.push([a,1+j*segments+(k+1)%segments]);if(j<rings-2)edges.push([a,a+segments]);}
+      for(let k=0;k<segments;k++){edges.push([0,1+k]);edges.push([end,1+(rings-2)*segments+k]);}
+      return mesh(pts,edges,material);
+    }
+    function tube(a,b,r1,r2,material='body',sides=7){
+      const axis=unit(sub(b,a)),v=unit(cross(axis,Math.abs(axis[2])<.9?[0,0,1]:[1,0,0])),u=cross(axis,v),pts=[],edges=[];
+      for(let end=0;end<2;end++){const center=end?b:a,r=end?r2:r1;for(let k=0;k<sides;k++){const t=k*TAU/sides;pts.push(add(center,add(mul(v,Math.cos(t)*r),mul(u,Math.sin(t)*r*.85))));}}
+      for(let k=0;k<sides;k++){edges.push([k,(k+1)%sides],[k+sides,(k+1)%sides+sides],[k,k+sides]);}
+      return mesh(pts,edges,material);
+    }
+    function makeHorse(){
+      const h=[];
+      h.push(ellipsoid([-.27,.15,0],[1.25,.59,.48],0,'body',10,6));
+      h.push(ellipsoid([-1.15,.24,0],[.58,.64,.47],-.10));
+      h.push(ellipsoid([.76,.29,0],[.54,.72,.46],.12));
+      h.push(tube([.75,.52,0],[1.34,1.67,0],.44,.25));
+      h.push(ellipsoid([1.18,1.07,0],[.35,.78,.30],-.44));
+      h.push(ellipsoid([1.64,1.67,0],[.48,.27,.27],-.49));
+      h.push(ellipsoid([1.98,1.40,0],[.32,.22,.225],-.36));
+      h.push(tube([1.39,1.83,-.16],[1.38,2.23,-.18],.115,.018,'body',5));
+      h.push(tube([1.53,1.86,.16],[1.58,2.28,.18],.12,.015,'body',5));
+      // Four distinct legs, with knees, hocks, and hooves.
+      for(const z of [-.32,.32]){
+        const far=z<0;
+        const hip=[-1.03,.08,z],hock=[far?-1.34:-.75,-.73,z],ankle=[far?-1.17:-.97,-1.48,z];
+        h.push(tube(hip,hock,.25,.12),ellipsoid(hock,[.16,.18,.14],0,'body',6,4),tube(hock,ankle,.105,.072));
+        h.push(ellipsoid([ankle[0]+.07,-1.59,z],[.19,.12,.13],0,'hoof',6,3));
+        const shoulder=[far?.69:.91,.15,z],knee=[far?.53:1.0,-.75,z],fetlock=[far?.6:1.04,-1.48,z];
+        h.push(tube(shoulder,knee,.19,.105),ellipsoid(knee,[.115,.14,.115],0,'body',6,4),tube(knee,fetlock,.083,.065));
+        h.push(ellipsoid([fetlock[0]+.06,-1.59,z],[.18,.12,.13],0,'hoof',6,3));
+      }
+      h.push(tube([-1.48,.52,0],[-1.87,.05,.035],.16,.125,'mane'));
+      h.push(tube([-1.87,.05,.035],[-2.08,-.58,.07],.125,.14,'mane'));
+      h.push(tube([-2.08,-.58,.07],[-1.97,-1.04,.09],.14,.025,'mane'));
+      h.push(tube([.73,.70,0],[1.11,1.60,0],.16,.10,'mane'));
+      h.push(tube([1.11,1.60,0],[1.40,1.83,0],.10,.075,'mane'));
+      h.push(ellipsoid([1.73,1.73,.249],[.045,.043,.023],0,'eye',6,3));
+      h.push(ellipsoid([1.73,1.73,-.249],[.045,.043,.023],0,'eye',6,3));
+      return h;
+    }
+    const horse=makeHorse();
+    const cubeVerts=[];for(let x of [-1,1])for(let y of [-1,1])for(let z of [-1,1])cubeVerts.push([x,y,z]);
+    const cubeEdges=[];for(let a=0;a<8;a++)for(let b=a+1;b<8;b++)if(cubeVerts[a].filter((v,i)=>v!==cubeVerts[b][i]).length===1)cubeEdges.push([a,b]);
+    const cube=[mesh(cubeVerts,cubeEdges)];
+    function rotate4(p,w,angle,plane){const q=[...p,w],c=Math.cos(angle),s=Math.sin(angle),old=q[plane];q[plane]=old*c-w*s;q[3]=old*s+w*c;return q;}
+    function geometry(kind,angle,plane){
+      const shapes=kind==='horse'?horse:cube,extent=kind==='horse'?EXTENT:1;
+      const sources=[],shadows=[];
+      for(const part of shapes){
+        const lower=part.vertices.map(p=>rotate4(p,-extent,angle,plane)),upper=part.vertices.map(p=>rotate4(p,extent,angle,plane));
+        const solid=hull([...lower,...upper].map(p=>p.slice(0,3)));
+        shadows.push({...solid,material:part.material});
+        sources.push({lower,upper,wire:part.wire,material:part.material});
+      }
+      return {sources,shadows};
+    }
+    function camera(yaw=state.yaw,pitch=state.pitch){const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);return p=>{const x=p[0]*cy+p[2]*sy,z=-p[0]*sy+p[2]*cy;return [x,p[1]*cp-z*sp,p[1]*sp+z*cp];};}
+    function projector(cam,cx,cy,scale){return p=>{const q=cam(p);return [cx+q[0]*scale,cy-q[1]*scale,q[2]];};}
+    function path(context,pts,close=false){context.beginPath();pts.forEach((p,i)=>i?context.lineTo(p[0],p[1]):context.moveTo(p[0],p[1]));if(close)context.closePath();}
+    function line(context,a,b,color,width=1){context.strokeStyle=color;context.lineWidth=width;path(context,[a,b]);context.stroke();}
+    function floor(context,project,kind){const gy=kind==='horse'?-1.72:-1.64;for(let x=-3;x<=3.01;x+=.5)line(context,project([x,gy,-1.7]),project([x,gy,1.7]),'rgba(100,143,119,.10)',.65);for(let z=-1.5;z<=1.51;z+=.5)line(context,project([-3,gy,z]),project([3,gy,z]),'rgba(100,143,119,.10)',.65);}
+    const palettes={body:[213,160,111],mane:[106,78,53],hoof:[90,72,57],eye:[20,28,24]};
+    function drawSolid(context,parts,project,cam,alpha=1){
+      const faces=[],light=unit([-.4,.9,1.3]);
+      for(const part of parts){const pts=part.points.map(project);for(const ids of part.faces){const world=ids.map(i=>part.points[i]),n=unit(cross(sub(world[1],world[0]),sub(world[2],world[0])));if(cam(n)[2]<-.03)continue;const amount=.48+.52*Math.max(0,dot(n,light)),base=palettes[part.material]||palettes.body;faces.push({pts:ids.map(i=>pts[i]),depth:ids.reduce((s,i)=>s+pts[i][2],0)/3,color:`rgba(${base.map(v=>Math.round(v*amount)).join(',')},${alpha})`});}}
+      faces.sort((a,b)=>a.depth-b.depth);
+      for(const f of faces){path(context,f.pts,true);context.fillStyle=f.color;context.fill();context.strokeStyle=f.color;context.lineWidth=.55;context.lineJoin='round';context.stroke();}
+    }
+    function oblique(p){return [p[0]+p[3]*.56,p[1]+p[3]*.68,p[2]+p[3]*.42];}
+    function drawSource(context,parts,project){
+      const allLines=[];
+      for(const part of parts){
+        if(part.material==='eye')continue;
+        const lo=part.lower.map(p=>project(oblique(p))),hi=part.upper.map(p=>project(oblique(p)));
+        for(const [a,b] of part.wire){allLines.push({a:lo[a],b:lo[b],color:'rgba(85,144,132,.30)'});allLines.push({a:hi[a],b:hi[b],color:'rgba(177,222,191,.61)'});}
+        if(state.connections){const every=state.kind==='cube'?1:Math.max(2,Math.ceil(lo.length/8));for(let i=0;i<lo.length;i+=every)allLines.push({a:lo[i],b:hi[i],color:'rgba(237,171,120,.26)',dashed:true});}
+      }
+      allLines.sort((a,b)=>(a.a[2]+a.b[2])-(b.a[2]+b.b[2]));
+      context.lineWidth=.7;
+      for(const l of allLines){context.setLineDash(l.dashed?[2,4]:[]);line(context,l.a,l.b,l.color,l.dashed?.7:.8);}context.setLineDash([]);
+      if(state.kind==='cube'){for(const p of [...parts[0].lower,...parts[0].upper]){const q=project(oblique(p));context.beginPath();context.arc(q[0],q[1],2.5,0,TAU);context.fillStyle='#b9ddbd';context.fill();}}
+    }
+    function drawAxes(context,cam,x,y){
+      const origin=[x,y],length=18;
+      for(const [vec,label,color] of [[[1,0,0],'x','#a4d5bb'],[[0,1,0],'y','#a4d5bb'],[[0,0,1],'z','#789c90']]){const p=cam(vec),end=[x+p[0]*length,y-p[1]*length];line(context,origin,end,color,.8);context.fillStyle=color;context.font='8px Consolas,monospace';context.fillText(label,end[0]+4,end[1]+3);}
+    }
+    function render(){
+      if(!dirty)return;dirty=false;
+      const key=[state.kind,Math.round(state.angle*2)/2,state.plane].join(':');
+      if(key!==geometryKey){const g=geometry(state.kind,state.angle*PI/180,state.plane);shadowParts=g.shadows;sourceParts=g.sources;geometryKey=key;}
+      ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,width,height);
+      const mobile=window.matchMedia('(max-width:760px)').matches,cam=camera(),panels=mobile?[{x:0,y:0,w:width,h:height/2},{x:0,y:height/2,w:width,h:height/2}]:[{x:0,y:0,w:width/2,h:height},{x:width/2,y:0,w:width/2,h:height}];
+      for(let i=0;i<2;i++){
+        const p=panels[i];ctx.save();ctx.beginPath();ctx.rect(p.x,p.y,p.w,p.h);ctx.clip();
+        const scale=Math.min(p.w/(i===0?6.8:6.25),(p.h-80)/(i===0?5.1:4.65));
+        const project=projector(cam,p.x+p.w*.49,p.y+p.h*.55,scale);
+        floor(ctx,project,state.kind);
+        if(i===0)drawSource(ctx,sourceParts,project);else drawSolid(ctx,shadowParts,project,cam);
+        if(!mobile)drawAxes(ctx,cam,p.x+p.w-43,p.y+p.h-50);
+        ctx.restore();
+      }
+      if(mobile)line(ctx,[23,height/2],[width-23,height/2],'rgba(107,139,117,.15)',1);else line(ctx,[width/2,23],[width/2,height-23],'rgba(107,139,117,.15)',1);
+    }
+    const galleryMeshes=[0,35,65].map(angle=>geometry('horse',angle*PI/180,0).shadows);
+    function drawGallery(){
+      [0,1,2].forEach(i=>{const c=$('specimen-'+i),r=c.getBoundingClientRect();if(!r.width||!r.height)return;c.width=Math.round(r.width*dpr);c.height=Math.round(r.height*dpr);const context=c.getContext('2d');context.setTransform(dpr,0,0,dpr,0,0);context.clearRect(0,0,r.width,r.height);const cam=camera(-.24,.10),project=projector(cam,r.width*.5,r.height*.53,Math.min(r.width/5.6,(r.height-12)/4.4));drawSolid(context,galleryMeshes[i],project,cam);});
+    }
+    function resize(){const r=canvas.getBoundingClientRect();width=r.width;height=r.height;dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);dirty=true;drawGallery();render();}
+    function updateUI(updateCaption=true){
+      $('angle-output').textContent=Math.round(state.angle)+'°';$('rotation').value=Math.round(state.angle);
+      $('horse-tab').setAttribute('aria-pressed',String(state.kind==='horse'));$('cube-tab').setAttribute('aria-pressed',String(state.kind==='cube'));
+      $('source-label').textContent=state.kind==='horse'?'The one horse':'A four-dimensional cube';
+      $('shadow-label').textContent=state.kind==='horse'?'A horse in our world':'Its three-dimensional shadow';
+      document.querySelector('.range-notes span:nth-child(2)').textContent=state.kind==='horse'?'0° · the familiar horse':'0° · the familiar cube';
+      $('play').setAttribute('aria-pressed',String(state.playing));$('play-icon').textContent=state.playing?'Ⅱ':'▶';$('play-text').textContent=state.playing?'Pause rotation':'Play rotation';
+      const a=Math.abs(state.angle);let caption;
+      if(a<.5)caption=state.kind==='horse'?'<strong>At 0°, the extra dimension disappears.</strong> The two w-boundaries project onto the same 3D horse. Move the slider to reveal what it hides.':'<strong>At 0°, the tesseract casts a cube-shaped shadow.</strong> A cube × an interval is a tesseract. The horse uses the same construction.';
+      else if(a>70)caption=state.kind==='horse'?'<strong>You’re looking almost along a familiar axis.</strong> Much of that direction is hidden, while the w-extent becomes visible. A horse-shaped parent need not cast a horse-like shadow at every angle.':'<strong>The fourth axis is taking the place of a familiar one.</strong> At 90°, the tesseract again casts a cube-shaped shadow. Different 4D orientations can have identical projections.';
+      else caption='<strong>Same parent. A different shadow.</strong> Rotation mixes '+['x','y','z'][state.plane]+' with w. Projecting away w now changes the visible volume. Drag the scene to inspect its depth.';
+      if(updateCaption&&caption!==lastCaption){$('rotation-help').innerHTML=caption;lastCaption=caption;}
+      const axis=['x','y','z'][state.plane];$('equation').textContent=a<.5?'π(x, y, z, w) = (x, y, z)':'π · R'+axis+'w('+Math.round(state.angle)+'°) · '+(state.kind==='horse'?'H₄':'C₄');
+      canvas.setAttribute('aria-label',(state.kind==='horse'?'Four-dimensional horse':'Tesseract')+' at '+Math.round(state.angle)+' degrees in the '+axis+'-w plane. The wireframe parent and its solid 3D projection. Drag horizontally or use arrow keys to orbit.');
+      dirty=true;
+    }
+    function setPlaying(on){state.playing=on;if(on){playPhase=Math.asin(clamp(state.angle/80,-1,1));lastTime=0;frame=requestAnimationFrame(tick);}else{cancelAnimationFrame(frame);frame=0;lastTime=0;}updateUI();render();}
+    function tick(t){if(!state.playing)return;const delta=lastTime?Math.min((t-lastTime)/1000,.05):0;lastTime=t;playPhase+=delta*.23;const previous=Math.round(state.angle);state.angle=80*Math.sin(playPhase);if(Math.round(state.angle)!==previous)updateUI();dirty=true;render();frame=requestAnimationFrame(tick);}
+    $('rotation').addEventListener('input',e=>{if(state.playing)setPlaying(false);state.angle=Number(e.target.value);updateUI();render();});
+    $('plane').addEventListener('change',e=>{state.plane=['xw','yw','zw'].indexOf(e.target.value);updateUI();render();});
+    $('connectors').addEventListener('change',e=>{state.connections=e.target.checked;dirty=true;render();});
+    $('play').addEventListener('click',()=>setPlaying(!state.playing));
+    function choose(kind){state.kind=kind;updateUI();render();}
+    $('horse-tab').addEventListener('click',()=>choose('horse'));$('cube-tab').addEventListener('click',()=>choose('cube'));
+    $('reset').addEventListener('click',()=>{if(state.playing)setPlaying(false);Object.assign(state,{kind:'horse',angle:0,plane:0,yaw:-.30,pitch:.12,connections:true});$('plane').value='xw';$('connectors').checked=true;updateUI();render();});
+    document.querySelectorAll('.specimen').forEach(button=>button.addEventListener('click',()=>{if(state.playing)setPlaying(false);Object.assign(state,{kind:'horse',angle:Number(button.dataset.angle),plane:0,yaw:-.30,pitch:.12});$('plane').value='xw';updateUI();render();$('lab').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});}));
+    let drag=null;
+    canvas.addEventListener('pointerdown',e=>{if(e.button!==0)return;drag={id:e.pointerId,x:e.clientX,y:e.clientY,yaw:state.yaw,pitch:state.pitch,touch:e.pointerType==='touch'};canvas.setPointerCapture(e.pointerId);canvas.classList.add('dragging');});
+    canvas.addEventListener('pointermove',e=>{if(!drag||e.pointerId!==drag.id)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;state.yaw=drag.yaw+dx*.009;if(!drag.touch)state.pitch=clamp(drag.pitch+dy*.005,-.65,.7);dirty=true;render();});
+    function endDrag(){drag=null;canvas.classList.remove('dragging');}
+    canvas.addEventListener('pointerup',endDrag);canvas.addEventListener('pointercancel',endDrag);canvas.addEventListener('lostpointercapture',endDrag);
+    canvas.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key)){e.preventDefault();if(e.key==='ArrowLeft')state.yaw-=.12;if(e.key==='ArrowRight')state.yaw+=.12;if(e.key==='ArrowUp')state.pitch=clamp(state.pitch+.08,-.65,.7);if(e.key==='ArrowDown')state.pitch=clamp(state.pitch-.08,-.65,.7);dirty=true;render();}});
+    document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.playing)setPlaying(false);});
+    $('download').addEventListener('click',()=>{const clone=document.documentElement.cloneNode(true);clone.querySelector('#toast').hidden=true;clone.querySelectorAll('canvas').forEach(c=>{c.removeAttribute('width');c.removeAttribute('height');});const text='<!doctype html>\n'+clone.outerHTML;const blob=new Blob([text],{type:'text/html;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='single-horse-model.html';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);$('toast').hidden=false;setTimeout(()=>$('toast').hidden=true,3500);});
+    // A tiny inspection interface for validating projection invariants without changing the scene.
+    window.HorseModel=Object.freeze({snapshot:()=>({...state,componentCount:horse.length}),projectPoint:(point,w,angle=0,plane=0)=>rotate4(point,w,angle*PI/180,plane).slice(0,3),inspectMesh:(angle=0,kind='horse',plane=0)=>geometry(kind,angle*PI/180,plane).shadows.map(p=>({points:p.points,faces:p.faces})),tesseractCounts:()=>({vertices:cubeVerts.length*2,edges:cubeEdges.length*2+cubeVerts.length})});
+    new ResizeObserver(resize).observe($('stage'));window.addEventListener('resize',resize);updateUI();resize();
+  })();
+  </script>
+</body>
+</html>
