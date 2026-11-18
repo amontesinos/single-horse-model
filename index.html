@@ -136,7 +136,7 @@ const builds=[[1,.98,1],[.93,1.08,.88],[1.13,.92,1.03],[.90,1.03,.95],[1.12,.86,
 const orientations=[-.15,.24,0,PI-.2,-.3,.5];
 const tips=[.09,.15,.07,.20,.12,.17];
 const handCenters=[[-2.75,.2],[-1.1,.8],[.65,.7],[2.5,-.1],[-3.45,-1.15]];
-const handTips=[.10,.02,.05,.18,.40];
+const handSpan=177.5,handTips=[.10,.02,.05,.18,.40].map(v=>v*219/handSpan);
 const baseParts=horse.map(part=>({...hull(part.vertices),material:part.material}));
 let width=1,height=1,dpr=1,frame=0,lastTime=0,lastPaint=0,drag=null,lastCaption='',sliceDir=1,slicePauseUntil=0,sliceEndHold=0,holdingSlice=false;
 function horseProfiles(slice,time=0,variation=true){
@@ -151,9 +151,9 @@ function horseProfiles(slice,time=0,variation=true){
   });
 }
 function handProfiles(slice,time=0,variation=true){
-  const merge=smooth(.46,.62,slice),freedom=1-merge,palmRadius=mix(1.75,1.45,smooth(.62,1,slice));
+  const merge=smooth(.57,.77,slice),freedom=1-merge,palmRadius=mix(1.75,1.55,smooth(.77,1,slice));
   return handCenters.map((c,i)=>{
-    const tip=handTips[i]+smooth(0,.7,time)*Math.sin(time*.7+i)*.01,growth=tipCap(tip,tip+.055,slice);
+    const tip=handTips[i]+smooth(0,.7,time)*Math.sin(time*.7+i)*.01,growth=tipCap(tip,tip+.068,slice);
     return {id:i,growth,merge,active:growth>1e-5,center:c.map(v=>v*freedom),radius:growth*mix(variation?[.48,.56,.52,.40,.60][i]:.53,palmRadius,merge)};
   });
 }
@@ -203,7 +203,7 @@ function drawHorseWorld(p,profiles){
 }
 function drawPaperWorld(p,profiles){
   const scale=Math.min((p.w-64)/9.8,(p.h-125)/7.5),cx=p.x+p.w*.5,cy=p.y+p.h*.56;
-  const left=cx-4.5*scale,top=cy-2.7*scale,merged=state.slice>=.62;
+  const left=cx-4.5*scale,top=cy-2.7*scale,merged=state.slice>=.77;
   ctx.fillStyle='rgba(174,204,167,.035)';ctx.strokeStyle='#365447';ctx.lineWidth=1;ctx.fillRect(left,top,9*scale,5.4*scale);ctx.strokeRect(left,top,9*scale,5.4*scale);
   for(let i=-4;i<=4;i++)line([cx+i*scale,top],[cx+i*scale,top+5.4*scale],'rgba(144,187,154,.1)',.7);
   for(let i=-2;i<=2;i++)line([left,cy+i*scale],[left+9*scale,cy+i*scale],'rgba(144,187,154,.1)',.7);
@@ -217,7 +217,7 @@ function curve(points,color,width){ctx.beginPath();ctx.moveTo(...points[0]);ctx.
 // A relaxed left hand seen from the back, fingers pointing down at the paper.
 // Each digit is a centerline (cubic Bézier from inside the hand to the tip; y grows downward)
 // plus a width profile. Fingertip heights come from handTips, so each tip meets the paper on cue.
-const handTipY=i=>305-handTips[i]*219;
+const handTipY=i=>305-handTips[i]*handSpan;
 function makeDigit(i,knuckle,tipX,{back=30,bow=0,base=13,end=11,joints=[.55,.8]}={}){
   const tip=[tipX,handTipY(i)],dx=tip[0]-knuckle[0],dy=tip[1]-knuckle[1],len=Math.hypot(dx,dy),u=[dx/len,dy/len],n=[-u[1],u[0]];
   const p0=[knuckle[0]-u[0]*back,knuckle[1]-u[1]*back],at=(f,b)=>[p0[0]+(tip[0]-p0[0])*f+n[0]*b,p0[1]+(tip[1]-p0[1])*f+n[1]*b];
@@ -339,7 +339,7 @@ function drawParent(p,profiles){
   const hand=state.mode==='hand',count=hand?5:6;
   const scale=Math.min((p.w-34)/490,(p.h-120)/315),cx=p.x+p.w*.5,top=p.y+104;
   ctx.save();ctx.translate(cx,top);ctx.scale(scale,scale);
-  const sliceY=305-state.slice*219;
+  const sliceY=305-state.slice*(hand?handSpan:219);
   const armXs=[-190,-114,-38,38,114,190];
   const curves=hand?naturalFingerCurves():armXs.map((x,i)=>{const endY=305-tips[i]*219-7;return [[(i-(count-1)/2)*13,91],[x*.32,125],[x*.95,endY-55],[x,endY]];});
   if(state.reveal){
@@ -361,7 +361,7 @@ function drawParent(p,profiles){
   path([[-220,sliceY-9],[204,sliceY-9],[220,sliceY+10],[-204,sliceY+10]],true);ctx.fillStyle='rgba(237,171,120,.09)';ctx.fill();ctx.strokeStyle='rgba(237,171,120,.52)';ctx.lineWidth=.9;ctx.stroke();
   ctx.setLineDash([3,5]);line([-211,sliceY],[214,sliceY],'rgba(237,171,120,.3)',.7);ctx.setLineDash([]);
   const palm=hand?palmSectionAt(sliceY):null;
-  if(state.slice<(hand?.62:.97)){for(let i=0;i<count;i++){
+  if(state.slice<(hand?.77:.97)){for(let i=0;i<count;i++){
     if(!profiles[i].active)continue;
     const merge=profiles[i].merge;
     if(hand){
@@ -397,7 +397,7 @@ function updateUI(){
   $('parent-title').textContent=hand?'One connected hand':'One hypothetical Octo-Horse creature';
   $('parent-subtitle').textContent=hand?'ABOVE THE PAPER · SIMPLIFIED DIAGRAM':'OUTSIDE OUR WORLD · SCHEMATIC';
   $('world-subtitle').textContent=hand?'IN THE PAPER · VIEWED FROM ABOVE':'OUR WORLD · SIX SAMPLE BRANCHES';
-  const joined=hand?state.slice>=.62:state.slice>=.97,approaching=hand?state.slice>.46:state.slice>.85;
+  const joined=hand?state.slice>=.77:state.slice>=.97,approaching=hand?state.slice>.57:state.slice>.85;
   $('world-title').textContent=joined?(hand?'One joined palm section':'One joined body section'):approaching?'Approaching the shared body':hand?(active+' finger cross-sections'):(active+' horse cross-sections');
   $('scene-hint').textContent=hand?'The circles are intersections, not shadows.':'↔ Drag the herd to orbit · arrow keys work too';
   $('diagram-hint').textContent=hand?'A 3D object can make separate 2D intersections.':'A diagram of connections, not a literal view of 4D.';
