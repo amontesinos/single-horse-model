@@ -1,6 +1,6 @@
 # The Single Horse Model
 
-An interactive, Flatland-inspired thought experiment: one connected four-dimensional Octo-Horse, roughly sixty million horse-shaped tentacles, and the three-dimensional cross-sections we call horses.
+An interactive, Flatland-inspired thought experiment: one connected four-dimensional Omni-Horse, roughly sixty million horse-shaped tentacles, and the three-dimensional cross-sections we call horses.
 
 **[Open the website](https://amontesinos.github.io/single-horse-model/)**
 
