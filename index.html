@@ -135,8 +135,8 @@ const centers=[[-4.3,0,-3.25],[0,0,-3.4],[4.3,0,-3.15],[-4.3,0,3.25],[0,0,3.4],[
 const builds=[[1,.98,1],[.93,1.08,.88],[1.13,.92,1.03],[.90,1.03,.95],[1.12,.86,1.08],[.98,1.10,.95]];
 const orientations=[-.15,.24,0,PI-.2,-.3,.5];
 const tips=[.09,.15,.07,.20,.12,.17];
-const handCenters=[[-2.75,.2],[-1.1,.8],[.65,.7],[2.5,-.1],[1.1,-1.3]];
-const handTips=[.14,.02,.05,.18,.40];
+const handCenters=[[-2.75,.2],[-1.1,.8],[.65,.7],[2.5,-.1],[-3.45,-1.15]];
+const handTips=[.10,.02,.05,.18,.40];
 const baseParts=horse.map(part=>({...hull(part.vertices),material:part.material}));
 let width=1,height=1,dpr=1,frame=0,lastTime=0,lastPaint=0,drag=null,lastCaption='';
 function horseProfiles(slice,time=0,variation=true){
@@ -211,68 +211,118 @@ function drawPaperWorld(p,profiles){
 }
 function bezierPoint(points,t){const u=1-t;return [0,1].map(axis=>u*u*u*points[0][axis]+3*u*u*t*points[1][axis]+3*u*t*t*points[2][axis]+t*t*t*points[3][axis]);}
 function curve(points,color,width){ctx.beginPath();ctx.moveTo(...points[0]);ctx.bezierCurveTo(...points[1],...points[2],...points[3]);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.lineCap='round';ctx.stroke();}
-function naturalFingerCurves(){
-  // Index, middle, ring, little finger, then the shorter thumb folded toward the viewer.
-  return [
-    [[-83,157],[-107,185],[-118,239],[-125,275]],
-    [[-44,177],[-53,212],[-44,270],[-45,299]],
-    [[-4,179],[-5,219],[13,261],[17,294]],
-    [[35,164],[49,197],[72,236],[89,266]],
-    [[91,101],[82,137],[57,186],[42,218]]
-  ];
+// The hand is described once, so the drawing and the cross-section markers always agree.
+// A relaxed left hand seen from the back, fingers pointing down at the paper.
+// Each digit is a centerline (cubic Bézier from inside the hand to the tip; y grows downward)
+// plus a width profile. Fingertip heights come from handTips, so each tip meets the paper on cue.
+const handTipY=i=>305-handTips[i]*219;
+function makeDigit(i,knuckle,tipX,{back=30,bow=0,base=13,end=11,joints=[.55,.8]}={}){
+  const tip=[tipX,handTipY(i)],dx=tip[0]-knuckle[0],dy=tip[1]-knuckle[1],len=Math.hypot(dx,dy),u=[dx/len,dy/len],n=[-u[1],u[0]];
+  const p0=[knuckle[0]-u[0]*back,knuckle[1]-u[1]*back],at=(f,b)=>[p0[0]+(tip[0]-p0[0])*f+n[0]*b,p0[1]+(tip[1]-p0[1])*f+n[1]*b];
+  return {curve:[p0,at(1/3,bow),at(2/3,bow),tip],base,end,joints};
+}
+// The thumb's outline starts under the cuff (its lead), so its outer edge is the hand's whole outline on that side:
+// down from the wrist, out along the base of the thumb, then the thumb itself. Sections follow the main curve.
+const handDigits=[
+  makeDigit(0,[-33,150],-54,{base:13.4,end:11.4,bow:1.5}),
+  makeDigit(1,[-6,155],-11,{base:13.9,end:11.8,bow:.5}),
+  makeDigit(2,[21,151],34,{base:13.1,end:11.2,bow:-.5}),
+  makeDigit(3,[45,141],73,{base:11.2,end:9.6,bow:-1.5}),
+  {lead:[[-13,8],[-13,35],[-18.7,65.2],[-29,80]],curve:[[-29,80],[-43.3,100.5],[-78,178.4],[-87,handTipY(4)]],widths:[[0,18],[.2,18.5],[.4,19.8],[.62,16.6],[.86,16.3],[1,15]],end:15,joints:[.8],thumb:true}
+];
+function bezierTangent(c,t){const u=1-t;return [0,1].map(a=>3*u*u*(c[1][a]-c[0][a])+6*u*t*(c[2][a]-c[1][a])+3*t*t*(c[3][a]-c[2][a]));}
+// Width keys are [position, half-width] pairs; each span eases between its two keys.
+function widthAt(keys,u){
+  for(let k=1;k<keys.length;k++)if(u<=keys[k][0]){const [u0,h0]=keys[k-1],[u1,h1]=keys[k],t=clamp((u-u0)/(u1-u0),0,1);return mix(h0,h1,t*t*(3-2*t));}
+  return keys[keys.length-1][1];
+}
+// Offset a digit's centerline by its half-width, with slight joint swelling and a round tip.
+function digitOutline(d){
+  const pts=[],tangents=[],acc=[0];
+  for(const c of d.lead?[d.lead,d.curve]:[d.curve])for(let k=pts.length?1:0;k<=60;k++){pts.push(bezierPoint(c,k/60));tangents.push(bezierTangent(c,k/60));}
+  const steps=pts.length-1;
+  for(let k=1;k<=steps;k++)acc.push(acc[k-1]+Math.hypot(pts[k][0]-pts[k-1][0],pts[k][1]-pts[k-1][1]));
+  const length=acc[steps],cap=d.end,left=[],right=[],frames=[];
+  for(let k=0;k<=steps;k++){
+    const s=acc[k],f=s/length,u=clamp(s/(length-cap),0,1),tangent=tangents[k],m=Math.hypot(...tangent)||1,nx=-tangent[1]/m,ny=tangent[0]/m;
+    let h;
+    if(d.widths)h=widthAt(d.widths,u);
+    else{h=mix(d.base,d.end,u);for(const j of d.joints)h*=1+.04*Math.exp(-(((f-j)/.045)**2));}
+    if(s>length-cap)h=cap*Math.sqrt(Math.max(0,1-((s-length+cap)/cap)**2));
+    left.push([pts[k][0]+nx*h,pts[k][1]+ny*h]);right.push([pts[k][0]-nx*h,pts[k][1]-ny*h]);
+    frames.push({p:pts[k],n:[nx,ny],t:[ny,-nx],h,f});
+  }
+  return {polygon:left.concat(right.reverse()),left,right,frames,length};
+}
+const handOutlines=handDigits.map(digitOutline);
+function frameAt(o,f){let k=0;while(k<o.frames.length-1&&o.frames[k].f<f)k++;return o.frames[k];}
+const edgePoint=(i,f,side,k=1)=>{const a=frameAt(handOutlines[i],f);return [a.p[0]+side*k*a.n[0]*a.h,a.p[1]+side*k*a.n[1]*a.h];};
+const digitCore=(i,f)=>frameAt(handOutlines[i],f).p;
+// Where two neighbouring digits part, the web between them sits just above the gap.
+function edgeAt(edge,y){for(let k=1;k<edge.length;k++){const a=edge[k-1],b=edge[k];if((a[1]-y)*(b[1]-y)<=0&&a[1]!==b[1])return a[0]+(b[0]-a[0])*(y-a[1])/(b[1]-a[1]);}return null;}
+function webPoint(a,b,y){const xa=edgeAt(handOutlines[a].right,y),xb=edgeAt(handOutlines[b].left,y);return [(xa+xb)/2,y];}
+const handWebs=[webPoint(4,0,159),webPoint(0,1,177),webPoint(1,2,179),webPoint(2,3,171)];
+// The back of the hand: its top hides under the cuff, its thumb side runs inside the thumb,
+// and its little-finger side follows that finger's outer edge, so the silhouette has no kinks.
+const palmOutline=[
+  [-13,12],digitCore(4,.14),digitCore(4,.3),digitCore(4,.44),handWebs[0],[-35,170],handWebs[1],[-7,188],handWebs[2],[21,184],handWebs[3],
+  edgePoint(3,.46,-1,.55),edgePoint(3,.3,-1),edgePoint(3,.22,-1),edgePoint(3,.15,-1),[53.8,116],[53.6,90],[53,62],[51,30],[43,16],[15,10]
+];
+function smoothClosedPath(points){
+  const path=new Path2D(),n=points.length;path.moveTo(...points[0]);
+  for(let i=0;i<n;i++){const p0=points[(i-1+n)%n],p1=points[i],p2=points[(i+1)%n],p3=points[(i+2)%n];path.bezierCurveTo(p1[0]+(p2[0]-p0[0])/6,p1[1]+(p2[1]-p0[1])/6,p2[0]-(p3[0]-p1[0])/6,p2[1]-(p3[1]-p1[1])/6,p2[0],p2[1]);}
+  path.closePath();return path;
+}
+function polygonPath(points){const path=new Path2D();points.forEach((p,i)=>i?path.lineTo(...p):path.moveTo(...p));path.closePath();return path;}
+const handShapes={palm:smoothClosedPath(palmOutline),digits:handOutlines.map(o=>polygonPath(o.polygon))};
+function naturalFingerCurves(){return handDigits.map(d=>d.curve);}
+function drawNail(i){
+  const o=handOutlines[i],d=handDigits[i],thumb=!!d.thumb,end=d.end;
+  const at=frameAt(o,1-(thumb?1.1:1.02)*end/o.length),len=end*(thumb?1.2:1.45),w=end*(thumb?.74:1.16),shift=thumb?end*.28:0;
+  ctx.save();ctx.translate(at.p[0]+at.n[0]*shift,at.p[1]+at.n[1]*shift);ctx.rotate(Math.atan2(at.t[1],at.t[0])+PI/2);
+  ctx.beginPath();ctx.moveTo(-w/2,-len/2+w*.18);ctx.quadraticCurveTo(0,-len/2-w*.1,w/2,-len/2+w*.18);
+  ctx.lineTo(w/2,len/2-w*.42);ctx.quadraticCurveTo(w/2,len/2,0,len/2);ctx.quadraticCurveTo(-w/2,len/2,-w/2,len/2-w*.42);ctx.closePath();
+  ctx.fillStyle='rgba(247,218,204,.82)';ctx.fill();ctx.strokeStyle='rgba(166,108,82,.32)';ctx.lineWidth=.8;ctx.stroke();
+  ctx.restore();
+}
+function drawCrease(o,f,span,offset=0){
+  const at=frameAt(o,f),half=at.h*span;
+  ctx.beginPath();ctx.moveTo(at.p[0]+at.n[0]*half+at.t[0]*offset,at.p[1]+at.n[1]*half+at.t[1]*offset);
+  ctx.quadraticCurveTo(at.p[0]+at.t[0]*(offset+2.4),at.p[1]+at.t[1]*(offset+2.4),at.p[0]-at.n[0]*half+at.t[0]*offset,at.p[1]-at.n[1]*half+at.t[1]*offset);ctx.stroke();
+}
+// A shirt cuff covers the wrist; the sleeve above it fades out before it reaches the panel labels.
+function drawSleeve(){
+  const frame=()=>{ctx.translate(11,24);ctx.rotate(.13);};
+  ctx.save();frame();
+  const fabric=ctx.createLinearGradient(-60,0,64,0);fabric.addColorStop(0,'#33604f');fabric.addColorStop(1,'#1f4136');
+  ctx.beginPath();ctx.moveTo(-45,-20);ctx.bezierCurveTo(-52,-70,-58,-120,-60,-200);ctx.lineTo(64,-200);ctx.bezierCurveTo(62,-120,57,-70,49,-20);ctx.closePath();
+  ctx.fillStyle=fabric;ctx.fill();ctx.strokeStyle='#7aab90';ctx.lineWidth=1.1;ctx.stroke();
+  ctx.restore();
+  ctx.save();ctx.globalCompositeOperation='destination-out';
+  const fade=ctx.createLinearGradient(0,0,0,-42);fade.addColorStop(0,'rgba(0,0,0,0)');fade.addColorStop(1,'rgba(0,0,0,1)');
+  ctx.fillStyle=fade;ctx.fillRect(-160,-400,320,400);ctx.restore();
+  ctx.save();frame();
+  ctx.beginPath();ctx.roundRect(-47,-24,96,34,6);ctx.fillStyle='#3b6b59';ctx.fill();ctx.strokeStyle='#8ebda2';ctx.lineWidth=1.1;ctx.stroke();
+  ellipse(33,-7,2.6,2.6,'#a4d5bb',null);
+  ctx.restore();
 }
 function drawNaturalHand(){
-  const skin=ctx.createLinearGradient(-85,25,110,295);
-  skin.addColorStop(0,'#f1d1b5');skin.addColorStop(.58,'#dfa989');skin.addColorStop(1,'#c38b6d');
-  // One continuous outline keeps the palm and four fingers joined without scalloped knuckles.
-  ctx.beginPath();ctx.moveTo(141,-18);ctx.lineTo(215,-18);
-  ctx.bezierCurveTo(183,27,151,67,126,96);
-  ctx.bezierCurveTo(118,116,97,137,83,155);
-  ctx.bezierCurveTo(72,172,58,185,47,190);
-  ctx.bezierCurveTo(59,207,75,229,96,249);
-  ctx.bezierCurveTo(109,263,94,280,82,265);
-  ctx.bezierCurveTo(64,245,46,219,32,197);
-  ctx.bezierCurveTo(28,193,23,194,23,201);
-  ctx.bezierCurveTo(24,229,35,255,34,281);
-  ctx.bezierCurveTo(34,301,9,306,3,286);
-  ctx.bezierCurveTo(-4,261,-10,234,-15,210);
-  ctx.bezierCurveTo(-17,203,-24,204,-27,212);
-  ctx.bezierCurveTo(-30,236,-26,266,-30,287);
-  ctx.bezierCurveTo(-32,306,-57,306,-61,288);
-  ctx.bezierCurveTo(-69,266,-67,232,-64,210);
-  ctx.bezierCurveTo(-63,201,-70,199,-75,207);
-  ctx.bezierCurveTo(-88,226,-97,252,-109,272);
-  ctx.bezierCurveTo(-121,291,-144,280,-138,260);
-  ctx.bezierCurveTo(-130,233,-124,213,-113,186);
-  ctx.bezierCurveTo(-99,149,-86,130,-58,112);
-  ctx.bezierCurveTo(-19,85,38,70,70,39);
-  ctx.bezierCurveTo(99,14,119,-4,141,-18);ctx.closePath();
-  ctx.fillStyle=skin;ctx.fill();ctx.strokeStyle='#c9987c';ctx.lineWidth=1.4;ctx.stroke();
-  // Restrained palm folds; the fingers show their pads, so there are no nail dots.
-  ctx.beginPath();ctx.moveTo(-60,151);ctx.bezierCurveTo(-30,139,0,144,24,159);
-  ctx.moveTo(-71,173);ctx.bezierCurveTo(-45,160,-20,166,0,176);
-  ctx.moveTo(43,102);ctx.bezierCurveTo(24,117,20,141,29,160);
-  ctx.strokeStyle='rgba(137,85,65,.25)';ctx.lineWidth=1.4;ctx.lineCap='round';ctx.stroke();
-  ctx.beginPath();ctx.moveTo(-120,228);ctx.quadraticCurveTo(-112,233,-104,231);
-  ctx.moveTo(-63,242);ctx.quadraticCurveTo(-47,247,-30,242);
-  ctx.moveTo(-7,239);ctx.quadraticCurveTo(7,242,25,236);
-  ctx.moveTo(59,229);ctx.quadraticCurveTo(69,229,76,223);
-  ctx.strokeStyle='rgba(137,85,65,.2)';ctx.lineWidth=1.1;ctx.stroke();
-  // The thumb sits in front of the palm, with a broad base and a short rounded tip.
-  const thumb=ctx.createLinearGradient(30,105,92,218);
-  thumb.addColorStop(0,'#edc3a5');thumb.addColorStop(1,'#dba081');
-  ctx.beginPath();ctx.moveTo(100,88);ctx.bezierCurveTo(116,104,108,127,92,151);
-  ctx.bezierCurveTo(81,171,67,193,57,208);ctx.bezierCurveTo(47,224,26,222,22,206);
-  ctx.bezierCurveTo(18,193,26,179,33,167);ctx.bezierCurveTo(47,142,52,119,64,104);
-  ctx.bezierCurveTo(75,90,90,81,100,88);ctx.closePath();
-  ctx.fillStyle=thumb;ctx.fill();ctx.strokeStyle='rgba(157,100,75,.45)';ctx.lineWidth=1.1;ctx.stroke();
-  ctx.beginPath();ctx.moveTo(34,176);ctx.quadraticCurveTo(48,184,65,181);
-  ctx.moveTo(32,181);ctx.quadraticCurveTo(46,189,62,186);
-  ctx.strokeStyle='rgba(137,85,65,.27)';ctx.lineWidth=.9;ctx.stroke();
-  // Only the forward-facing thumb nail is visible, as a small rounded trapezoid.
-  ctx.beginPath();ctx.moveTo(31,198);ctx.quadraticCurveTo(39,193,53,200);
-  ctx.lineTo(49,210);ctx.quadraticCurveTo(38,217,29,207);ctx.closePath();
-  ctx.fillStyle='rgba(246,217,198,.68)';ctx.fill();ctx.strokeStyle='rgba(181,127,102,.35)';ctx.lineWidth=.7;ctx.stroke();
+  const skin=ctx.createLinearGradient(-83,20,97,300);
+  skin.addColorStop(0,'#f4d8bf');skin.addColorStop(.6,'#e8b997');skin.addColorStop(1,'#d6a17f');
+  const shapes=[handShapes.palm,...handShapes.digits];
+  // Stroke every part first, then fill them all: the outline traces only the outside of the whole hand.
+  ctx.lineJoin='round';ctx.lineCap='round';ctx.strokeStyle='#b47d60';ctx.lineWidth=2.4;
+  for(const s of shapes)ctx.stroke(s);
+  ctx.fillStyle=skin;for(const s of shapes)ctx.fill(s);
+  // A few joint creases and the nails make the digits read as fingers.
+  ctx.strokeStyle='rgba(150,92,66,.22)';ctx.lineWidth=.9;
+  for(const [i,o] of handOutlines.entries()){
+    const d=handDigits[i];
+    if(d.thumb){drawCrease(o,d.joints[0],.36,-1.4);drawCrease(o,d.joints[0],.28,1.4);continue;}
+    drawCrease(o,d.joints[0],.42,-1.6);drawCrease(o,d.joints[0],.32,1.6);drawCrease(o,d.joints[1],.3);
+  }
+  for(let i=0;i<handDigits.length;i++)drawNail(i);
+  drawSleeve();
 }
 function drawParent(p,profiles){
   const hand=state.mode==='hand',count=hand?5:6;
@@ -301,13 +351,12 @@ function drawParent(p,profiles){
   ctx.setLineDash([3,5]);line([-211,sliceY],[214,sliceY],'rgba(237,171,120,.3)',.7);ctx.setLineDash([]);
   if(state.slice<.99){for(let i=0;i<count;i++){
     if(!profiles[i].active)continue;
-    const merge=hand?profiles[i].merge:0,sectionY=sliceY+(hand?[0,7,5,10,-9][i]*(1-merge):0);
+    const merge=hand?profiles[i].merge:0,sectionY=sliceY+(hand?[2,6,5,1,-8][i]*(1-merge):0);
     let lo=0,hi=1;for(let k=0;k<18;k++){const mid=(lo+hi)/2;if(bezierPoint(curves[i],mid)[1]<sectionY)lo=mid;else hi=mid;}
-    const q=bezierPoint(curves[i],(lo+hi)/2),r=profiles[i].growth*(hand?mix(i===4?16:i===3?11:14,44,merge):10);
+    const q=bezierPoint(curves[i],(lo+hi)/2),r=profiles[i].growth*(hand?mix([13,13.4,12.6,10.8,14.5][i],52,merge):10);
     ellipse(mix(q[0],0,merge),sectionY,r,r*.4,hand?'#b78456':'#c99a6d','#f0c092',1);
   }}
-  else ellipse(0,sliceY,hand?44:32,hand?15:12,'#b78b63','#f0c092',1.2);
-  if(hand){ctx.fillStyle='rgba(11,27,28,.86)';ctx.fillRect(130,sliceY-35,66,16);}
+  else ellipse(0,sliceY,hand?52:32,hand?18:12,'#b78b63','#f0c092',1.2);
   label(hand?'2D PAPER':'OUR 3D WORLD',hand?138:-217,sliceY-24,'#edab78',9,'left');
   if(!state.reveal)label('THE CONNECTION IS HIDDEN FROM THIS WORLD',0,44,'#9cb69f',9);
   const bottom=hand?'Circle-shaped intersections; the hand is connected above.':'Horse-shaped intersections; connections continue along w.';
