@@ -21,7 +21,7 @@
 <div class="scale-strip" aria-label="The hypothesis in numbers"><div class="scale-item"><span class="value">1</span><span class="description"><b>HYPOTHETICAL</b><br>connected creature</span></div><div class="scale-item"><span class="value">~60M</span><span class="description"><b>HORSE-SHAPED</b><br>cross-sections</span></div><div class="scale-item"><span class="value">4 → 3</span><span class="description"><b>DIMENSIONS</b><br>being → our world</span></div></div>
 <section class="lab" id="lab" aria-label="Interactive cross-section lab"><div class="lab-top"><div class="lab-title"><b>FIG. 02</b> THE CROSS-SECTION LAB</div><div class="tabs" role="group" aria-label="Choose the dimensional analogy"><button id="creature-tab" type="button" aria-pressed="true">The horse creature</button><button id="hand-tab" type="button" aria-pressed="false">Fingers &amp; paper</button></div></div>
 <div class="stage" id="stage"><canvas id="scene" tabindex="0" aria-label="A schematic of one connected four-dimensional horse creature and six horse-shaped three-dimensional cross-sections. Move the slice slider to explore, or drag the right view to orbit. Arrow keys also orbit."></canvas><div class="view-labels"><div class="view-label"><div class="dimension" id="parent-dimension">4D</div><div><strong id="parent-title">One hypothetical Octo-Horse creature</strong><small id="parent-subtitle">OUTSIDE OUR WORLD · SCHEMATIC</small></div></div><div class="view-label world"><div class="dimension" id="world-dimension">3D</div><div><strong id="world-title">Six horse cross-sections</strong><small id="world-subtitle">OUR WORLD · SIX SAMPLE BRANCHES</small></div></div></div><div class="stage-status"><span id="scene-hint"><span class="accent">↔</span> Drag the herd to orbit · arrow keys work too</span><span class="desktop" id="diagram-hint">A diagram of connections, not a literal view of 4D.</span></div></div>
-<div class="controls"><div><div class="slider-head"><label id="slice-label" for="slice">Move our world through the creature</label><output id="slice-output" for="slice">w = 0.45</output></div><input id="slice" type="range" min="0" max="100" step="1" value="45" aria-describedby="slice-help"><div class="range-notes" aria-hidden="true"><span>Outside</span><span>Separate branches</span><span>Shared body</span></div></div><div class="toggles"><label class="toggle"><input type="checkbox" id="reveal" checked>Reveal the hidden connections</label><label class="toggle"><input type="checkbox" id="variation" checked><span id="variation-label">Different horses / fingerprints</span></label></div><div class="actions"><button id="play" class="play" type="button" aria-pressed="false">Animate the herd</button><button id="reset" class="reset" type="button" aria-label="Reset the cross-section lab" title="Reset the cross-section lab">↺</button></div></div>
+<div class="controls"><div><div class="slider-head"><label id="slice-label" for="slice">Move our world through the creature</label><output id="slice-output" for="slice">w = 0.45</output></div><input id="slice" type="range" min="0" max="100" step="0.1" value="45" aria-describedby="slice-help"><div class="range-notes" aria-hidden="true"><span>Outside</span><span>Separate branches</span><span>Shared body</span></div></div><div class="toggles"><label class="toggle"><input type="checkbox" id="reveal" checked>Reveal the hidden connections</label><label class="toggle"><input type="checkbox" id="variation" checked><span id="variation-label">Different horses / fingerprints</span></label></div><div class="actions"><button id="play" class="play" type="button" aria-pressed="false">Animate the herd</button><button id="reset" class="reset" type="button" aria-label="Reset the cross-section lab" title="Reset the cross-section lab">↺</button></div></div>
 <p class="live-caption" id="slice-help" aria-live="polite"><strong>Separate in our world. Connected outside it.</strong> Each visible horse is a different branch intersecting the same 3D slice. The shared body lies farther along w.</p></section>
 <div class="lab-note"><code id="slice-equation">Our world = creature ∩ {w = 0.45}</code><span id="model-note">6 branches illustrated. ~60 million proposed. No shadows required.</span></div>
 <noscript>Enable JavaScript to move the cross-section and animate the herd. The explanation and source notes below remain readable.</noscript>
@@ -137,7 +137,7 @@ const tips=[.09,.15,.07,.20,.12,.17];
 const handCenters=[[-2.75,.2],[-1.1,.8],[.65,.7],[2.5,-.1],[-3.45,-1.15]];
 const handTips=[.10,.02,.05,.18,.40];
 const baseParts=horse.map(part=>({...hull(part.vertices),material:part.material}));
-let width=1,height=1,dpr=1,frame=0,lastTime=0,lastPaint=0,drag=null,lastCaption='';
+let width=1,height=1,dpr=1,frame=0,lastTime=0,lastPaint=0,drag=null,lastCaption='',sliceDir=1,slicePauseUntil=0,sliceEndHold=0,holdingSlice=false;
 function horseProfiles(slice,time=0,variation=true){
   const merge=smooth(.63,1,slice),freedom=1-merge;
   return centers.map((c,i)=>{
@@ -373,7 +373,7 @@ function render(){
 }
 function updateUI(){
   const hand=state.mode==='hand',profiles=hand?handProfiles(state.slice,state.time,state.variation):horseProfiles(state.slice,state.time,state.variation),active=profiles.filter(p=>p.active).length,coordinate=hand?'z':'w';
-  $('slice').value=Math.round(state.slice*100);$('slice-output').textContent=coordinate+' = '+state.slice.toFixed(2);
+  if(!holdingSlice)$('slice').value=(state.slice*100).toFixed(1);$('slice-output').textContent=coordinate+' = '+state.slice.toFixed(2);
   $('slice-label').textContent=hand?'Move the paper through the hand':'Move our world through the creature';
   $('creature-tab').setAttribute('aria-pressed',String(!hand));$('hand-tab').setAttribute('aria-pressed',String(hand));
   $('parent-dimension').textContent=hand?'3D':'4D';$('world-dimension').textContent=hand?'2D':'3D';
@@ -398,30 +398,34 @@ function updateUI(){
   canvas.setAttribute('aria-label',(hand?'A connected hand and its two-dimensional finger sections':'One connected 4D creature and its 3D horse sections')+'. '+coordinate+' equals '+state.slice.toFixed(2)+'. '+active+' sample branches intersect. '+(hand?'Move the slice slider to explore.':'Drag the right view or use arrow keys to orbit.'));
 }
 function resize(){const rect=canvas.getBoundingClientRect();width=rect.width;height=rect.height;dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(width*dpr);canvas.height=Math.round(height*dpr);render();}
-function setPlaying(on){state.playing=on;cancelAnimationFrame(frame);lastTime=0;lastPaint=0;if(on)frame=requestAnimationFrame(tick);updateUI();render();}
-function tick(time){if(!state.playing)return;const delta=lastTime?Math.min((time-lastTime)/1000,.06):0;lastTime=time;state.time+=delta;if(time-lastPaint>=33){if(state.mode==='hand'&&state.slice<.49)updateUI();render();lastPaint=time;}frame=requestAnimationFrame(tick);}
+function ensureLoop(){if(!frame&&!document.hidden){lastTime=0;lastPaint=0;frame=requestAnimationFrame(tick);}}
+function setPlaying(on){state.playing=on;updateUI();render();ensureLoop();}
+function tick(time){frame=0;if(document.hidden)return;const delta=lastTime?Math.min((time-lastTime)/1000,.06):0;lastTime=time;if(state.playing)state.time+=delta;const autoSlice=!holdingSlice&&time>=slicePauseUntil;if(autoSlice&&delta>0){if(sliceEndHold>0)sliceEndHold=Math.max(0,sliceEndHold-delta);else{state.slice=clamp(state.slice+sliceDir*delta*.14,0,1);if(state.slice>=1){state.slice=1;sliceDir=-1;sliceEndHold=.6;}else if(state.slice<=0){state.slice=0;sliceDir=1;sliceEndHold=.6;}}}if((autoSlice||state.playing)&&time-lastPaint>=33){updateUI();render();lastPaint=time;}ensureLoop();}
 function selectMode(mode){if(state.playing)setPlaying(false);state.mode=mode;state.time=0;updateUI();render();}
 function scrollToLab(){ $('lab').scrollIntoView({behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'}); }
-$('slice').addEventListener('input',event=>{state.slice=Number(event.target.value)/100;updateUI();render();});
+$('slice').addEventListener('pointerdown',()=>{holdingSlice=true;slicePauseUntil=performance.now()+5000;});
+const releaseSlice=()=>{if(!holdingSlice)return;holdingSlice=false;slicePauseUntil=performance.now()+5000;};
+window.addEventListener('pointerup',releaseSlice);window.addEventListener('pointercancel',releaseSlice);window.addEventListener('touchend',releaseSlice);
+$('slice').addEventListener('input',event=>{const next=Number(event.target.value)/100;if(next!==state.slice)sliceDir=next>state.slice?1:-1;state.slice=next;if(state.slice>=1)sliceDir=-1;else if(state.slice<=0)sliceDir=1;sliceEndHold=0;slicePauseUntil=performance.now()+5000;updateUI();render();});
 $('reveal').addEventListener('change',event=>{state.reveal=event.target.checked;render();});
 $('variation').addEventListener('change',event=>{state.variation=event.target.checked;render();});
 $('creature-tab').addEventListener('click',()=>selectMode('creature'));$('hand-tab').addEventListener('click',()=>selectMode('hand'));
 $('play').addEventListener('click',()=>setPlaying(!state.playing));
-$('reset').addEventListener('click',()=>{if(state.playing)setPlaying(false);Object.assign(state,{mode:'creature',slice:.45,reveal:true,variation:true,playing:false,selected:0,yaw:-.19,pitch:.46,time:0});$('reveal').checked=true;$('variation').checked=true;updateSelection();updateUI();render();});
+$('reset').addEventListener('click',()=>{if(state.playing)setPlaying(false);Object.assign(state,{mode:'creature',slice:.45,reveal:true,variation:true,playing:false,selected:0,yaw:-.19,pitch:.46,time:0});sliceDir=1;slicePauseUntil=0;sliceEndHold=0;$('reveal').checked=true;$('variation').checked=true;updateSelection();updateUI();render();});
 function updateSelection(){document.querySelectorAll('.horse-choice').forEach(button=>button.setAttribute('aria-pressed',String(Number(button.dataset.horse)===state.selected)));$('selected-note').innerHTML='<strong>'+names[state.selected]+':</strong> '+moods[state.selected]+'. Same hypothetical parent; a different local agenda.';}
 document.querySelectorAll('.horse-choice').forEach(button=>button.addEventListener('click',()=>{state.selected=Number(button.dataset.horse);updateSelection();render();}));
-$('show-hand').addEventListener('click',()=>{selectMode('hand');state.slice=.45;updateUI();render();scrollToLab();});
-$('compare-variation').addEventListener('click',()=>{selectMode('creature');state.slice=.45;state.variation=!state.variation;$('variation').checked=state.variation;updateUI();render();scrollToLab();});
+$('show-hand').addEventListener('click',()=>{selectMode('hand');state.slice=.45;sliceDir=1;sliceEndHold=0;updateUI();render();scrollToLab();});
+$('compare-variation').addEventListener('click',()=>{selectMode('creature');state.slice=.45;sliceDir=1;sliceEndHold=0;state.variation=!state.variation;$('variation').checked=state.variation;updateUI();render();scrollToLab();});
 canvas.addEventListener('pointerdown',event=>{if(event.button!==0||state.mode==='hand')return;const rect=canvas.getBoundingClientRect(),mobile=window.matchMedia('(max-width:760px)').matches;if(mobile?event.clientY-rect.top<295:event.clientX-rect.left<width/2)return;drag={id:event.pointerId,x:event.clientX,y:event.clientY,yaw:state.yaw,pitch:state.pitch,touch:event.pointerType==='touch'};canvas.setPointerCapture(event.pointerId);canvas.classList.add('dragging');});
 canvas.addEventListener('pointermove',event=>{if(!drag||event.pointerId!==drag.id)return;state.yaw=drag.yaw+(event.clientX-drag.x)*.008;if(!drag.touch)state.pitch=clamp(drag.pitch+(event.clientY-drag.y)*.005,.12,1.03);render();});
 function endDrag(){drag=null;canvas.classList.remove('dragging');}canvas.addEventListener('pointerup',endDrag);canvas.addEventListener('pointercancel',endDrag);canvas.addEventListener('lostpointercapture',endDrag);
 canvas.addEventListener('keydown',event=>{if(state.mode==='hand'||!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;event.preventDefault();if(event.key==='ArrowLeft')state.yaw-=.12;if(event.key==='ArrowRight')state.yaw+=.12;if(event.key==='ArrowUp')state.pitch=clamp(state.pitch+.08,.12,1.03);if(event.key==='ArrowDown')state.pitch=clamp(state.pitch-.08,.12,1.03);render();});
-document.addEventListener('visibilitychange',()=>{if(document.hidden&&state.playing)setPlaying(false);});
+document.addEventListener('visibilitychange',()=>{if(document.hidden){if(frame){cancelAnimationFrame(frame);frame=0;}if(state.playing)setPlaying(false);}else ensureLoop();});
 const fingerprintPaths=[];
 for(let i=0;i<5;i++){const cx=50+i*100;for(let ring=0;ring<9;ring++){const points=[];for(let step=0;step<=50;step++){const t=step/50*TAU,r=8+ring*3.3,x=cx+Math.cos(t)*r*(.65+i*.025)+Math.sin(t*2+i)*2.6,y=59+Math.sin(t)*r*1.35+Math.cos(t*3+i)*2;points.push((step?'L':'M')+x.toFixed(2)+' '+y.toFixed(2));}fingerprintPaths.push('<path d="'+points.join(' ')+'" fill="none" stroke="'+(i%2?'#d1a77f':'#9abd9d')+'" stroke-opacity="'+(.35+ring*.05)+'" stroke-width="1"/>');}fingerprintPaths.push('<text x="'+cx+'" y="120" text-anchor="middle" fill="#8eab98" font-family="monospace" font-size="8">0'+(i+1)+'</text>');}
 $('fingerprints').innerHTML=fingerprintPaths.join('');
 window.CrossSectionLab=Object.freeze({snapshot:()=>({...state}),horseProfiles,handProfiles,horsePoint,baseVertices:()=>baseParts.flatMap(part=>part.points)});
-new ResizeObserver(resize).observe($('stage'));window.addEventListener('resize',resize);updateSelection();updateUI();resize();
+new ResizeObserver(resize).observe($('stage'));window.addEventListener('resize',resize);updateSelection();updateUI();resize();ensureLoop();
 
 })();
 </script>
