@@ -140,7 +140,7 @@ const handTips=[.10,.02,.05,.18,.40];
 const baseParts=horse.map(part=>({...hull(part.vertices),material:part.material}));
 let width=1,height=1,dpr=1,frame=0,lastTime=0,lastPaint=0,drag=null,lastCaption='',sliceDir=1,slicePauseUntil=0,sliceEndHold=0,holdingSlice=false;
 function horseProfiles(slice,time=0,variation=true){
-  const merge=smooth(.63,1,slice),freedom=1-merge;
+  const merge=smooth(.85,.97,slice),freedom=1-merge;
   return centers.map((c,i)=>{
     const growth=tipCap(tips[i],tips[i]+.075,slice),scale=growth*mix(.52,1.12,merge);
     const phase=time*(.75+i*.14)+i*1.7;
@@ -151,10 +151,10 @@ function horseProfiles(slice,time=0,variation=true){
   });
 }
 function handProfiles(slice,time=0,variation=true){
-  const merge=smooth(.55,.85,slice),freedom=1-merge;
+  const merge=smooth(.46,.62,slice),freedom=1-merge,palmRadius=mix(1.75,1.45,smooth(.62,1,slice));
   return handCenters.map((c,i)=>{
     const tip=handTips[i]+smooth(0,.7,time)*Math.sin(time*.7+i)*.01,growth=tipCap(tip,tip+.055,slice);
-    return {id:i,growth,merge,active:growth>1e-5,center:c.map(v=>v*freedom),radius:growth*mix(variation?[.48,.56,.52,.40,.60][i]:.53,1.65,merge)};
+    return {id:i,growth,merge,active:growth>1e-5,center:c.map(v=>v*freedom),radius:growth*mix(variation?[.48,.56,.52,.40,.60][i]:.53,palmRadius,merge)};
   });
 }
 function horsePoint(p,profile){
@@ -179,7 +179,7 @@ function drawHorseWorld(p,profiles){
   floor(project);
   const selected=profiles[state.selected];
   if(selected.active&&selected.merge<.8){const points=[];for(let i=0;i<=48;i++){const t=i*TAU/48;points.push(project([selected.center[0]+Math.cos(t)*1.38,0.025,selected.center[2]+Math.sin(t)*.78]));}path(points);ctx.strokeStyle='rgba(237,171,120,.65)';ctx.lineWidth=1.25;ctx.stroke();}
-  const faces=[],light=unit([-.4,.9,1.3]),merged=state.slice===1;
+  const faces=[],light=unit([-.4,.9,1.3]),merged=state.slice>=.97;
   for(const profile of profiles){
     if(!profile.active||(merged&&profile.id>0))continue;
     for(const part of baseParts){
@@ -203,7 +203,7 @@ function drawHorseWorld(p,profiles){
 }
 function drawPaperWorld(p,profiles){
   const scale=Math.min((p.w-64)/9.8,(p.h-125)/7.5),cx=p.x+p.w*.5,cy=p.y+p.h*.56;
-  const left=cx-4.5*scale,top=cy-2.7*scale,merged=state.slice>=.85;
+  const left=cx-4.5*scale,top=cy-2.7*scale,merged=state.slice>=.62;
   ctx.fillStyle='rgba(174,204,167,.035)';ctx.strokeStyle='#365447';ctx.lineWidth=1;ctx.fillRect(left,top,9*scale,5.4*scale);ctx.strokeRect(left,top,9*scale,5.4*scale);
   for(let i=-4;i<=4;i++)line([cx+i*scale,top],[cx+i*scale,top+5.4*scale],'rgba(144,187,154,.1)',.7);
   for(let i=-2;i<=2;i++)line([left,cy+i*scale],[left+9*scale,cy+i*scale],'rgba(144,187,154,.1)',.7);
@@ -331,6 +331,10 @@ function digitSectionAt(i,y){
   for(let k=1;k<frames.length;k++){const a=frames[k-1],b=frames[k];if(y<=b.p[1]){const t=clamp((y-a.p[1])/(b.p[1]-a.p[1]||1),0,1);return {x:mix(a.p[0],b.p[0],t),r:mix(a.h,b.h,t)};}}
   const last=frames[frames.length-1];return {x:last.p[0],r:last.h};
 }
+function palmSectionAt(y){
+  const xl=edgeAt(handOutlines[4].left,y)??-52,xr=edgeAt(handOutlines[3].right,y)??53.7;
+  return {x:(xl+xr)/2,r:Math.max(38,(xr-xl)/2)};
+}
 function drawParent(p,profiles){
   const hand=state.mode==='hand',count=hand?5:6;
   const scale=Math.min((p.w-34)/490,(p.h-120)/315),cx=p.x+p.w*.5,top=p.y+104;
@@ -356,19 +360,21 @@ function drawParent(p,profiles){
   // The orange band is a schematic position of the lower-dimensional world.
   path([[-220,sliceY-9],[204,sliceY-9],[220,sliceY+10],[-204,sliceY+10]],true);ctx.fillStyle='rgba(237,171,120,.09)';ctx.fill();ctx.strokeStyle='rgba(237,171,120,.52)';ctx.lineWidth=.9;ctx.stroke();
   ctx.setLineDash([3,5]);line([-211,sliceY],[214,sliceY],'rgba(237,171,120,.3)',.7);ctx.setLineDash([]);
-  if(state.slice<(hand?.85:.99)){for(let i=0;i<count;i++){
+  const palm=hand?palmSectionAt(sliceY):null;
+  if(state.slice<(hand?.62:.97)){for(let i=0;i<count;i++){
     if(!profiles[i].active)continue;
     const merge=profiles[i].merge;
     if(hand){
-      const s=digitSectionAt(i,sliceY),r=mix(Math.max(s.r,profiles[i].growth*[11,11.5,11,9.5,12.5][i]),49,merge);
-      ellipse(mix(s.x,5,merge),sliceY,r,r*.36,'#b78456','#f0c092',1);
+      const s=digitSectionAt(i,sliceY),r=mix(Math.max(s.r,profiles[i].growth*[11,11.5,11,9.5,12.5][i]),palm.r,merge);
+      ellipse(mix(s.x,palm.x,merge),sliceY,r,Math.min(14,r*.32),'#b78456','#f0c092',1);
     }else{
+      const bodyMerge=smooth(.90,.97,state.slice);
       let lo=0,hi=1;for(let k=0;k<18;k++){const mid=(lo+hi)/2;if(bezierPoint(curves[i],mid)[1]<sliceY)lo=mid;else hi=mid;}
-      const q=bezierPoint(curves[i],(lo+hi)/2),r=profiles[i].growth*mix(9.5,32,merge);
-      ellipse(mix(q[0],0,merge),sliceY,r,r*.4,'#c99a6d','#f0c092',1);
+      const q=bezierPoint(curves[i],(lo+hi)/2),r=profiles[i].growth*mix(8.5,36,bodyMerge);
+      ellipse(mix(q[0],0,bodyMerge),sliceY,r,r*.4,'#c99a6d','#f0c092',1);
     }
   }}
-  else ellipse(hand?5:0,sliceY,hand?49:32,hand?17:12,'#b78b63','#f0c092',1.2);
+  else ellipse(hand?palm.x:0,sliceY,hand?palm.r:36,hand?14:12,'#b78b63','#f0c092',1.2);
   label(hand?'2D PAPER':'OUR 3D WORLD',hand?138:-217,sliceY-19,'#edab78',9,'left',hand?null:'rgba(11,27,28,.86)');
   if(!state.reveal)label('THE CONNECTION IS HIDDEN FROM THIS WORLD',0,44,'#9cb69f',9);
   line([226,310],[226,100],'rgba(164,213,187,.45)',.8);path([[222,107],[226,100],[230,107]]);ctx.strokeStyle='#91b398';ctx.lineWidth=.8;ctx.stroke();label(hand?'z':'w',237,107,'#a4d5bb',12);
@@ -391,7 +397,7 @@ function updateUI(){
   $('parent-title').textContent=hand?'One connected hand':'One hypothetical Octo-Horse creature';
   $('parent-subtitle').textContent=hand?'ABOVE THE PAPER · SIMPLIFIED DIAGRAM':'OUTSIDE OUR WORLD · SCHEMATIC';
   $('world-subtitle').textContent=hand?'IN THE PAPER · VIEWED FROM ABOVE':'OUR WORLD · SIX SAMPLE BRANCHES';
-  const joined=hand?state.slice>=.85:state.slice===1,approaching=hand?state.slice>.55:state.slice>.63;
+  const joined=hand?state.slice>=.62:state.slice>=.97,approaching=hand?state.slice>.46:state.slice>.85;
   $('world-title').textContent=joined?(hand?'One joined palm section':'One joined body section'):approaching?'Approaching the shared body':hand?(active+' finger cross-sections'):(active+' horse cross-sections');
   $('scene-hint').textContent=hand?'The circles are intersections, not shadows.':'↔ Drag the herd to orbit · arrow keys work too';
   $('diagram-hint').textContent=hand?'A 3D object can make separate 2D intersections.':'A diagram of connections, not a literal view of 4D.';
